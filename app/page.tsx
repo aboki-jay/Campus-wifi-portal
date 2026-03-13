@@ -1,7 +1,8 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState } from "react";
+import { useMemo, useState, useEffect } from "react"; // ADDED useEffect
+import { useRouter } from "next/navigation";
 
 type CredentialStatus = "unclaimed" | "claimed" | string;
 
@@ -227,11 +228,22 @@ function PasswordClaimedToast({ onClose }: { onClose: () => void }) {
 }
 
 export default function Home() {
+  const router = useRouter(); 
   const [cugNumber, setCugNumber] = useState("");
   const [ui, setUi] = useState<UiState>({ kind: "idle" });
   const [copied, setCopied] = useState(false);
 
   const canSubmit = useMemo(() => cugNumber.trim().length > 0, [cugNumber]);
+
+  // ADDED: Listen for successful OTP validation when returning from /otp!
+  useEffect(() => {
+    const savedSuccess = sessionStorage.getItem("wifi_success");
+    if (savedSuccess) {
+      const credential = JSON.parse(savedSuccess);
+      setUi({ kind: "success", credential });
+      sessionStorage.removeItem("wifi_success"); // Clean up so it doesn't show forever
+    }
+  }, []);
 
   async function lookup() {
     const cug = cugNumber.trim();
@@ -248,11 +260,20 @@ export default function Home() {
       setUi({ kind: "notFound" });
       return;
     }
+    
+    if (res.status === 409) {
+      setUi({ kind: "alreadyClaimed" });
+      return;
+    }
 
-    const body = (await res.json().catch(() => null)) as
-      | { ok: true; credential: LookupCredential }
-      | { ok: false; error: string }
-      | null;
+    const body = (await res.json().catch(() => null));
+
+    // ROUTING LOGIC!
+    if (body?.ok && body?.requires_otp) {
+      // Pass the CUG number in the URL so the OTP page knows who it is
+      router.push(`/otp?cug=${body.cugNumber}`);
+      return;
+    }
 
     if (!res.ok || !body || !("ok" in body) || body.ok !== true) {
       setUi({ kind: "notFound" });

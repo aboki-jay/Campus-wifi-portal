@@ -20,32 +20,19 @@ export async function POST(req: Request) {
 
   // STEP 1: Search the database for the CUG number
   for (const cug of candidates) {
-    console.log("=== SUPABASE QUERY START ===", { checkingCUG: cug });
-
     const res = await supabase
       .from("wifi_credentials")
       .select("cug_number, full_name, department, status, password")
       .eq("cug_number", cug)
       .maybeSingle();
 
-    console.log("=== SUPABASE QUERY RESULT ===", { foundData: res.data, error: res.error });
-
-    // If there is a database connection error, return 500
     if (res.error) {
       return NextResponse.json(
-        {
-          ok: false,
-          error: "db_error",
-          db_error: {
-            message: res.error.message,
-            code: res.error.code,
-          },
-        },
+        { ok: false, error: "db_error" },
         { status: 500 }
       );
     }
 
-    // If we found a match, save it and stop searching
     if (res.data) {
       data = res.data;
       break;
@@ -54,34 +41,48 @@ export async function POST(req: Request) {
 
   // STEP 2: Check the results and trigger the right UI states
 
-  // State A: Not Found (Triggers your Yellow Warning Modal)
+  // State A: Not Found
   if (!data) {
-    console.log("=== RESULT: CUG NOT FOUND ===");
     return NextResponse.json(
       { ok: false, error: "not_found" },
       { status: 404 }
     );
   }
 
-  // State B: Already Claimed (Triggers your Padlock Modal)
+  // State B: Already Claimed
   if (data.status === "claimed") {
-    console.log("=== RESULT: ALREADY CLAIMED ===");
     return NextResponse.json(
       { ok: false, error: "already_claimed" },
       { status: 409 }
     );
   }
 
-  // State C: Success / Unclaimed (Triggers your Success Modal)
-  console.log("=== RESULT: SUCCESS! ===");
+  // State C: Success / Unclaimed -> GENERATE OTP!
+  console.log("=== CUG FOUND! GENERATING OTP ===");
+  
+  // 1. Generate a random 6-digit number
+  const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
+  
+  // We log it here so you can see the "text message" in your Cursor terminal!
+  console.log(`📱 SMS SENT TO ${data.cug_number}: Your OTP is ${generatedOtp}`);
+
+  // 2. Save it to your new Supabase column
+  const { error: updateError } = await supabase
+    .from("wifi_credentials")
+    .update({ otp_code: generatedOtp })
+    .eq("cug_number", data.cug_number);
+
+  if (updateError) {
+    return NextResponse.json(
+      { ok: false, error: "db_error" },
+      { status: 500 }
+    );
+  }
+
+  // 3. Tell the frontend to move to the OTP page
   return NextResponse.json({
     ok: true,
-    credential: {
-      cugNumber: data.cug_number,
-      fullName: data.full_name,
-      department: data.department,
-      status: data.status,
-      password: data.password, // Here is our missing password fix!
-    },
+    requires_otp: true,
+    cugNumber: data.cug_number, // We send this back so the next page knows who is logging in
   });
 }
