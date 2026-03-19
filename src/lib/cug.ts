@@ -1,5 +1,5 @@
 export function buildCugCandidates(input: string): string[] {
-  const raw = (input ?? "").trim();
+  const raw = String(input ?? "").trim();
   if (!raw) return [];
 
   // Remove all Unicode whitespace characters (including NBSP) and common separators.

@@ -15,10 +15,11 @@ export function getSupabaseServerClient(): SupabaseClient {
     process.env.SUPABASE_URL ??
     process.env.NEXT_PUBLIC_SUPABASE_URL ??
     requireEnv("NEXT_PUBLIC_SUPABASE_URL");
+    
+  // 🛡️ CYBERSECURITY UPGRADE: Strictly require the VIP Service Role Key
   const key =
-    process.env.SUPABASE_ANON_KEY ??
-    process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
-    requireEnv("NEXT_PUBLIC_SUPABASE_ANON_KEY");
+    process.env.SUPABASE_SERVICE_ROLE_KEY ??
+    requireEnv("SUPABASE_SERVICE_ROLE_KEY");
 
   serverClient = createClient(url, key, {
     auth: { persistSession: false, autoRefreshToken: false },
@@ -26,4 +27,3 @@ export function getSupabaseServerClient(): SupabaseClient {
 
   return serverClient;
 }
-

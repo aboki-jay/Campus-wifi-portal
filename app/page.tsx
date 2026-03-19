@@ -83,7 +83,7 @@ function CloseChip({ onClick }: { onClick: () => void }) {
     <button
       type="button"
       onClick={onClick}
-      className="absolute right-[200px] top-[106px] flex items-center gap-1 rounded-[8px] border border-[#D9D9D9] bg-[#F5F5F5] py-[2px] pl-[6px] pr-[8px] text-[14px] font-medium leading-[18px] text-black"
+      className="fixed right-4 top-4 z-40 flex items-center gap-1 rounded-[8px] border border-[#D9D9D9] bg-[#F5F5F5] py-[4px] pl-[6px] pr-[8px] text-[13px] font-medium leading-[18px] text-black md:absolute md:right-[200px] md:top-[106px] md:text-[14px]"
     >
       <XIcon className="size-6" />
       Close
@@ -150,27 +150,27 @@ function NotFoundModal({ onClose }: { onClose: () => void }) {
 function AlreadyClaimedModal({ onClose }: { onClose: () => void }) {
   return (
     <ModalShell tone="neutral" onClose={onClose}>
-      <div className="flex flex-col gap-4 p-5">
-        <div className="relative h-[259px] w-[591px] max-w-full overflow-hidden">
-          <div className="absolute left-[266px] top-[-25px] size-[372px]">
-            <Image
-              src={ASSETS.alreadyClaimed}
-              alt=""
-              fill
-              className="object-cover"
-            />
-          </div>
-          <p className="absolute left-6 top-[92px] w-[253px] text-[32px] font-bold leading-[38px] text-[#1E1E1E]">
+      <div className="relative w-full max-w-[591px] overflow-hidden p-6 sm:p-8">
+        {/* 1. The Image (Pinned to the right, behind the text on small screens) */}
+        <div className="absolute right-[-40px] top-[-20px] size-[250px] sm:size-[372px] opacity-20 sm:opacity-100 pointer-events-none z-0">
+          <Image
+            src={ASSETS.alreadyClaimed}
+            alt=""
+            fill
+            className="object-contain sm:object-cover"
+          />
+        </div>
+
+        {/* 2. The Text Content (Flows naturally, no absolute positioning!) */}
+        <div className="relative z-10 flex flex-col gap-6 w-full sm:w-[60%] pt-10 pb-4">
+          <h2 className="text-[28px] sm:text-[32px] font-bold leading-tight text-[#1E1E1E]">
             Credentials Already Claimed.
-          </p>
-          <p className="absolute left-6 top-[174px] w-[288px] text-[16px] text-[#757575]">
-            Your password has been claimed already
+          </h2>
+          <p className="text-[14px] sm:text-[16px] leading-[1.546] text-[#757575]">
+            Your password has been claimed already. Kindly visit our office at the
+            Floral building at SUB.
           </p>
         </div>
-        <p className="text-[14px] leading-[1.546] text-[#1E1E1E]">
-          Your password has been claimed already. Kindly visit our office at
-          Floral building at SUB
-        </p>
       </div>
     </ModalShell>
   );
@@ -240,8 +240,9 @@ export default function Home() {
     const savedSuccess = sessionStorage.getItem("wifi_success");
     if (savedSuccess) {
       const credential = JSON.parse(savedSuccess);
-      setUi({ kind: "success", credential });
-      sessionStorage.removeItem("wifi_success"); // Clean up so it doesn't show forever
+      // 👇 CHANGE THIS TO "verify" SO IT STAYS MASKED AS ********
+      setUi({ kind: "verify", credential }); 
+      sessionStorage.removeItem("wifi_success");
     }
   }, []);
 
@@ -331,7 +332,7 @@ export default function Home() {
 
       {showBaseLayout && (
         <>
-          <div className="absolute left-1/2 top-[30px] h-[149.9px] w-[212px] -translate-x-1/2">
+          <div className="absolute left-1/2 top-4 h-[120px] w-[180px] -translate-x-1/2 sm:top-[30px] sm:h-[149.9px] sm:w-[212px]">
             <Image
               src={ASSETS.logo}
               alt="Dodopho Consultancy"
@@ -341,24 +342,24 @@ export default function Home() {
             />
           </div>
 
-          <div className="absolute left-1/2 top-[210px] flex w-[682px] -translate-x-1/2 flex-col items-center gap-[44px]">
+          <div className="mx-auto flex w-full max-w-[682px] flex-col items-center gap-[32px] px-4 pt-[160px] pb-10 sm:pt-[190px] md:absolute md:left-1/2 md:top-[210px] md:-translate-x-1/2 md:px-0 md:gap-[44px]">
             <div className="w-full text-center not-italic">
               <h1
-                className="text-center text-[62px] font-extrabold leading-[120%] tracking-[-1.28px] text-black bg-white"
+                className="bg-white text-center text-[32px] font-extrabold leading-[120%] tracking-[-0.04em] text-black sm:text-[40px] md:text-[62px]"
                 style={{ fontFamily: "Geist", backgroundClip: "unset", WebkitBackgroundClip: "unset" }}
               >
                 <span className="text-[#757575]">Get Your Campus</span>{" "}
                 <br />
                 Wi-Fi Credentials.
               </h1>
-              <p className="mx-auto mt-2 w-[474px] text-[18px] leading-[22px] text-[#5A5A5A]">
+              <p className="mx-auto mt-3 w-full max-w-[474px] text-[14px] leading-[20px] text-[#5A5A5A] sm:text-[16px] sm:leading-[22px]">
                 Enter your CUG number below to retrieve your personal internet
                 password and access locations.
               </p>
             </div>
 
             <div className="flex w-full flex-col items-center gap-4">
-              <div className="w-[502px]">
+              <div className="w-full max-w-[502px]">
                 <input
                   value={cugNumber}
                   onChange={(e) => setCugNumber(e.target.value)}
@@ -371,11 +372,11 @@ export default function Home() {
                 type="button"
                 onClick={lookup}
                 disabled={!canSubmit}
-                className="h-[40px] w-[382px] rounded-[8px] bg-[#33CB63] text-[14px] font-medium leading-6 text-white disabled:opacity-60"
+                className="h-[40px] w-full max-w-[382px] rounded-[8px] bg-[#33CB63] text-[14px] font-medium leading-6 text-white disabled:opacity-60"
               >
                 Claim password
               </button>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 px-2 text-center sm:px-0">
                 <div className="grid size-6 place-items-center text-[#975102]">
                   <svg
                     width="20"
@@ -391,14 +392,14 @@ export default function Home() {
                     />
                   </svg>
                 </div>
-                <p className="text-center text-[16px] text-[#975102]">
+                <p className="text-center text-[13px] text-[#975102] sm:text-[14px] md:text-[16px]">
                   This benefit is only accessible to CUG numbers
                 </p>
               </div>
             </div>
           </div>
 
-          <div className="absolute left-1/2 top-[658px] h-[544px] w-[1040px] -translate-x-1/2 rounded-[24px] bg-white shadow-[0_40px_80px_rgba(0,0,0,0.06)]">
+          <div className="mx-auto mt-10 h-[340px] w-full max-w-[1040px] rounded-[24px] bg-white shadow-[0_20px_40px_rgba(0,0,0,0.08)] sm:h-[420px] md:absolute md:left-1/2 md:top-[658px] md:h-[544px] md:-translate-x-1/2 md:shadow-[0_40px_80px_rgba(0,0,0,0.06)]">
             <div className="relative h-full w-full overflow-hidden rounded-[24px] bg-white">
               <Image
                 src={ASSETS.wifi}
@@ -642,7 +643,7 @@ export default function Home() {
       {(ui.kind === "verify" || ui.kind === "success") && (
         <>
           <CloseChip onClick={() => setUi({ kind: "idle" })} />
-          <div className="absolute left-1/2 top-[199px] w-[430px] -translate-x-1/2">
+          <div className="mx-auto w-full max-w-[430px] px-4 pt-[140px] pb-10 md:absolute md:left-1/2 md:top-[199px] md:-translate-x-1/2 md:px-0 md:pb-0">
             <div className="flex flex-col items-center gap-8">
               <div className="w-full">
                 <div className="flex flex-col items-center gap-6">
@@ -687,7 +688,7 @@ export default function Home() {
                   <div className="h-px w-full bg-black/10" />
 
                   <div className="w-full space-y-2">
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-2">
                         <div className="grid size-11 place-items-center rounded-full bg-[#F5F5F5] text-[#B3B3B3]">
                           <svg
@@ -710,18 +711,18 @@ export default function Home() {
                             />
                           </svg>
                         </div>
-                        <p className="text-[14px] font-medium text-[#B3B3B3]">
+                        <p className="text-[13px] font-medium text-[#B3B3B3] sm:text-[14px]">
                           Name
                         </p>
                       </div>
-                      <p className="text-[16px] font-bold text-[#5A5A5A]">
+                      <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">
                         {ui.kind === "verify"
                           ? ui.credential.fullName
                           : ui.credential.fullName}
                       </p>
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-2">
                         <div className="grid size-11 place-items-center rounded-full bg-[#F5F5F5] text-[#B3B3B3]">
                           <svg
@@ -745,18 +746,18 @@ export default function Home() {
                             />
                           </svg>
                         </div>
-                        <p className="text-[14px] font-medium text-[#B3B3B3]">
+                        <p className="text-[13px] font-medium text-[#B3B3B3] sm:text-[14px]">
                           Department
                         </p>
                       </div>
-                      <p className="text-[16px] font-bold text-[#5A5A5A]">
+                      <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">
                         {ui.kind === "verify"
                           ? ui.credential.department
                           : ui.credential.department}
                       </p>
                     </div>
 
-                    <div className="flex items-center justify-between">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-2">
                         <div className="grid size-11 place-items-center rounded-full bg-[#F5F5F5] text-[#B3B3B3]">
                           <svg
@@ -773,18 +774,18 @@ export default function Home() {
                             />
                           </svg>
                         </div>
-                        <p className="whitespace-pre text-[14px] font-medium text-[#B3B3B3]">
+                        <p className="whitespace-pre text-[13px] font-medium text-[#B3B3B3] sm:text-[14px]">
                           Your  Internet password
                         </p>
                       </div>
 
                       {ui.kind === "verify" ? (
-                        <p className="text-[16px] font-bold text-[#5A5A5A]">
+                        <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">
                           ******************
                         </p>
                       ) : (
                         <div className="flex items-center gap-2">
-                          <p className="text-[16px] font-bold text-[#5A5A5A]">
+                          <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">
                             {ui.credential.password}
                           </p>
                           <button
@@ -836,7 +837,7 @@ export default function Home() {
             </div>
           </div>
 
-          <p className="absolute left-1/2 top-[638px] -translate-x-1/2 text-center text-[14px] font-medium leading-6 text-[#757575]">
+          <p className="mt-4 px-6 text-center text-[13px] font-medium leading-6 text-[#757575] md:absolute md:left-1/2 md:top-[638px] md:-translate-x-1/2 md:px-0 md:text-[14px]">
             {ui.kind === "verify"
               ? "To access your password click on the button"
               : "Keep this password secure."}

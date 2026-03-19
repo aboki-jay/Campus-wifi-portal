@@ -3,86 +3,87 @@ import { getSupabaseServerClient } from "@/src/lib/supabase";
 import { buildCugCandidates } from "@/src/lib/cug";
 
 export async function POST(req: Request) {
-  const { cugNumber } = (await req.json().catch(() => ({}))) as {
-    cugNumber?: string;
-  };
+  try {
+    const body = await req.json().catch(() => ({}));
+    
+    // 🛡️ SECURITY CHECK 1: The Data Type Armor
+    // This forces whatever the frontend sends (even a raw number) into a clean string.
+    const rawCug = String(body.cugNumber || "").trim();
 
-  const candidates = buildCugCandidates(cugNumber ?? "");
-  if (candidates.length === 0) {
-    return NextResponse.json(
-      { ok: false, error: "missing_cug_number" },
-      { status: 400 }
-    );
-  }
+    if (!rawCug) {
+      return NextResponse.json({ ok: false, error: "Missing CUG number" }, { status: 400 });
+    }
 
-  const supabase = getSupabaseServerClient();
-  let data = null;
+    const candidates = buildCugCandidates(rawCug);
+    const supabase = getSupabaseServerClient();
+    let userData = null;
 
-  // STEP 1: Search the database for the CUG number
-  for (const cug of candidates) {
-    const res = await supabase
+    // 🛡️ SECURITY CHECK 2: Find the exact user record first
+    for (const cug of candidates) {
+      const { data, error } = await supabase
+        .from("wifi_credentials")
+        .select("*")
+        .eq("cug_number", cug)
+        .maybeSingle();
+
+      if (data) {
+        userData = data;
+        break;
+      }
+    }
+
+    // If we looped through all candidates and found nothing
+    if (!userData) {
+      return NextResponse.json({ ok: false, error: "CUG not found" }, { status: 404 });
+    }
+
+    // 🛡️ SECURITY CHECK 3: The Double-Click Defender (Idempotency)
+    // If they already claimed it (or tapped the button twice), just give them the 
+    // password again instead of throwing an error and scaring them!
+    if (userData.status === "claimed") {
+      return NextResponse.json({
+        ok: true,
+        credential: {
+          cugNumber: userData.cug_number,
+          fullName: userData.full_name,
+          department: userData.department,
+          status: "claimed",
+          password: userData.password,
+        },
+      });
+    }
+
+    // 🛡️ SECURITY CHECK 4: The Final Update & Clean Slate
+    const { error: updateError } = await supabase
       .from("wifi_credentials")
-      .select("cug_number, full_name, department, status, password")
-      .eq("cug_number", cug)
-      .maybeSingle();
+      .update({ 
+        status: "claimed",
+        otp_code: null,      // Wipe any leftover OTPs
+        failed_attempts: 0,  // Reset their strikes
+        locked_until: null   // Remove any locks
+      })
+      .eq("cug_number", userData.cug_number);
 
-    if (res.error) {
-      return NextResponse.json(
-        { ok: false, error: "db_error" },
-        { status: 500 }
-      );
+    if (updateError) {
+      console.error("Database Update Error:", updateError);
+      return NextResponse.json({ ok: false, error: "Failed to update status" }, { status: 500 });
     }
 
-    if (res.data) {
-      data = res.data;
-      break;
-    }
+    // SUCCESS! Hand over the credentials.
+    return NextResponse.json({
+      ok: true,
+      credential: {
+        cugNumber: userData.cug_number,
+        fullName: userData.full_name,
+        department: userData.department,
+        status: "claimed",
+        password: userData.password,
+      },
+    });
+
+  } catch (error) {
+    // A massive try/catch block so if ANYTHING goes wrong, the server doesn't crash.
+    console.error("=== CLAIM API CRITICAL ERROR ===", error);
+    return NextResponse.json({ ok: false, error: "Internal Server Error" }, { status: 500 });
   }
-
-  // STEP 2: Check the results and trigger the right UI states
-
-  // State A: Not Found
-  if (!data) {
-    return NextResponse.json(
-      { ok: false, error: "not_found" },
-      { status: 404 }
-    );
-  }
-
-  // State B: Already Claimed
-  if (data.status === "claimed") {
-    return NextResponse.json(
-      { ok: false, error: "already_claimed" },
-      { status: 409 }
-    );
-  }
-
-  // State C: Success / Unclaimed -> GENERATE OTP!
-  console.log("=== CUG FOUND! GENERATING OTP ===");
-  
-  // 1. Generate a random 6-digit number
-  const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-  
-  // We log it here so you can see the "text message" in your Cursor terminal!
-  console.log(`📱 SMS SENT TO ${data.cug_number}: Your OTP is ${generatedOtp}`);
-
-  // 2. Save it to your new Supabase column
-  const { error: updateError } = await supabase
-    .from("wifi_credentials")
-    .update({ otp_code: generatedOtp })
-    .eq("cug_number", data.cug_number);
-
-  if (updateError) {
-    return NextResponse.json(
-      { ok: false, error: "db_error" },
-      { status: 500 }
-    );
-  }
-
-  // 3. Tell the frontend to move to the OTP page
-  return NextResponse.json({
-    ok: true,
-    requires_otp: true,
-    cugNumber: data.cug_number, // We send this back so the next page knows who is logging in
-  });
 }

@@ -3,21 +3,13 @@ import { getSupabaseServerClient } from "@/src/lib/supabase";
 import { buildCugCandidates } from "@/src/lib/cug";
 
 export async function POST(req: Request) {
-  // TRACKER 1: What did the frontend actually send?
   const body = await req.json().catch(() => ({}));
-  console.log("=== 1. FRONTEND SENT ===", body);
-
   const { cugNumber } = body as { cugNumber?: string };
 
   const candidates = buildCugCandidates(cugNumber ?? "");
-  // TRACKER 2: What is Next.js searching for?
-  console.log("=== 2. SEARCHING FOR THESE VARIATIONS ===", candidates);
 
   if (candidates.length === 0) {
-    return NextResponse.json(
-      { ok: false, error: "missing_cug_number" },
-      { status: 400 }
-    );
+    return NextResponse.json({ ok: false, error: "missing_cug_number" }, { status: 400 });
   }
 
   const supabase = getSupabaseServerClient();
@@ -30,12 +22,6 @@ export async function POST(req: Request) {
       .eq("cug_number", cug)
       .maybeSingle();
 
-    // TRACKER 3: What did Supabase say?
-    console.log(`=== 3. SUPABASE RESULT FOR '${cug}' ===`, { 
-      found: !!res.data, 
-      error: res.error 
-    });
-
     if (res.error) {
       return NextResponse.json({ ok: false, error: "db_error" }, { status: 500 });
     }
@@ -47,30 +33,70 @@ export async function POST(req: Request) {
   }
 
   if (!data) {
-    console.log("=== 4. END RESULT: 404 NOT FOUND ===");
     return NextResponse.json({ ok: false, error: "not_found" }, { status: 404 });
   }
 
   if (data.status === "claimed") {
-    console.log("=== 4. END RESULT: 409 ALREADY CLAIMED ===");
     return NextResponse.json({ ok: false, error: "already_claimed" }, { status: 409 });
   }
 
-  console.log("=== 4. END RESULT: SUCCESS! GENERATING OTP ===");
-  
+  // 1. Generate the OTP and Set Expiry
   const generatedOtp = Math.floor(100000 + Math.random() * 900000).toString();
-  console.log(`📱 SMS SENT TO ${data.cug_number}: Your OTP is ${generatedOtp}`);
 
+  const expiryTime = new Date();
+  expiryTime.setMinutes(expiryTime.getMinutes() + 5);
+
+  // 2. Save to Database FIRST
   const { error: updateError } = await supabase
     .from("wifi_credentials")
-    .update({ otp_code: generatedOtp })
+    .update({ 
+      otp_code: generatedOtp,
+      otp_expires_at: expiryTime.toISOString(),
+      failed_attempts: 0,
+      locked_until: null 
+    })
     .eq("cug_number", data.cug_number);
 
+  // If the database fails, stop here. Don't send a text!
   if (updateError) {
     console.log("=== 5. ERROR SAVING OTP TO DATABASE ===", updateError);
     return NextResponse.json({ ok: false, error: "db_error" }, { status: 500 });
   }
 
+  // 3. 📱 THE SMS INTEGRATION (With Free Dev Mode)
+  // We only reach this point if the database successfully saved the OTP.
+  const termiiKey = process.env.TERMII_API_KEY;
+
+  if (!termiiKey || termiiKey === "pending") {
+    // 🛠️ DEV MODE: Just print it to the terminal so you can test the UI for free
+    console.log(`[DEV MODE] 📱 SMS WOULD SEND TO ${data.cug_number}: Your OTP is ${generatedOtp}`);
+  } else {
+    // 🚀 PRODUCTION MODE: Send the real text via Termii
+    let termiiNumber = data.cug_number;
+    if (termiiNumber.startsWith("0")) termiiNumber = "234" + termiiNumber.slice(1);
+    else if (termiiNumber.length === 10) termiiNumber = "234" + termiiNumber;
+
+    try {
+      const smsRes = await fetch("https://api.ng.termii.com/api/sms/send", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          to: termiiNumber,
+          from: "N-Alert",
+          sms: `Your Campus Wi-Fi OTP is ${generatedOtp}. It expires in 5 minutes. Do not share this code.`,
+          type: "plain",
+          channel: "dnd",
+          api_key: termiiKey,
+        }),
+      });
+      
+      if (!smsRes.ok) console.warn("Termii API rejected the request:", await smsRes.json());
+    } catch (err) {
+      console.error("Critical error contacting Termii:", err);
+    }
+  }
+
+  // 4. Send Success to the Frontend
   return NextResponse.json({
     ok: true,
     requires_otp: true,

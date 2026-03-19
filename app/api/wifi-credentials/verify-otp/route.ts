@@ -10,37 +10,65 @@ export async function POST(req: Request) {
 
   const supabase = getSupabaseServerClient();
 
-  // 1. Find the user in the database
   const { data, error } = await supabase
     .from("wifi_credentials")
     .select("*")
     .eq("cug_number", cugNumber)
     .single();
 
-  if (error || !data) {
-    return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+  if (error || !data) return NextResponse.json({ ok: false, error: "Not found" }, { status: 404 });
+
+  // 🛡️ CHECK 1: Is the user locked out?
+  if (data.locked_until && new Date(data.locked_until) > new Date()) {
+    const remainingMinutes = Math.ceil((new Date(data.locked_until).getTime() - new Date().getTime()) / 60000);
+    return NextResponse.json({ ok: false, error: `Locked for ${remainingMinutes} minute(s).` }, { status: 429 });
   }
 
-  // 2. Check if the typed OTP matches the database OTP
+  // 🛡️ CHECK 2: Has the OTP expired? (5-minute rule)
+  if (data.otp_expires_at && new Date(data.otp_expires_at) < new Date()) {
+    return NextResponse.json({ ok: false, error: "OTP expired. Please go back and request a new one." }, { status: 400 });
+  }
+
+  // 🛡️ CHECK 3: Is the OTP wrong?
   if (data.otp_code !== otp) {
+    const newAttempts = (data.failed_attempts || 0) + 1;
+    let updatePayload: any = { failed_attempts: newAttempts };
+    
+    if (newAttempts >= 3) {
+      const lockTime = new Date();
+      // 👇 UX TWEAK: Changed to 10 minutes!
+      lockTime.setMinutes(lockTime.getMinutes() + 10);
+      updatePayload.locked_until = lockTime.toISOString();
+    }
+
+    await supabase.from("wifi_credentials").update(updatePayload).eq("cug_number", cugNumber);
+
+    if (newAttempts >= 3) {
+       // 👇 UX TWEAK: Error message updated to 10 minutes!
+       return NextResponse.json({ ok: false, error: "Locked for 10 minutes." }, { status: 429 });
+    }
     return NextResponse.json({ ok: false, error: "Invalid OTP" }, { status: 401 });
   }
 
-  // 3. SUCCESS! Mark as claimed and clear the OTP so it can't be used again
+  // SUCCESS! Clear the OTP, but do NOT mark as claimed yet!
   await supabase
     .from("wifi_credentials")
-    .update({ status: "claimed", otp_code: null })
+    .update({ 
+      otp_code: null,
+      otp_expires_at: null, // Clear expiry
+      failed_attempts: 0,
+      locked_until: null
+    })
     .eq("cug_number", cugNumber);
 
-  // 4. Send the exact Wi-Fi password back to the frontend
   return NextResponse.json({
     ok: true,
     credential: {
       cugNumber: data.cug_number,
       fullName: data.full_name,
       department: data.department,
-      status: "claimed",
-      password: data.password // The hidden gem!
+      status: "unclaimed", // Keeps it masked on the frontend!
+      password: data.password 
     }
   });
 }
