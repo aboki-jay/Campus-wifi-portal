@@ -72,9 +72,17 @@ export async function POST(req: Request) {
     console.log(`[DEV MODE] 📱 SMS WOULD SEND TO ${data.cug_number}: Your OTP is ${generatedOtp}`);
   } else {
     // 🚀 PRODUCTION MODE: Send the real text via Termii
-    let termiiNumber = data.cug_number;
-    if (termiiNumber.startsWith("0")) termiiNumber = "234" + termiiNumber.slice(1);
-    else if (termiiNumber.length === 10) termiiNumber = "234" + termiiNumber;
+    // `data.cug_number` may come back from DB as a number (or other type), so coerce safely.
+    // Also normalize to digits-only to avoid unexpected characters.
+    const rawCugNumber = data.cug_number;
+    const digitsOnly = String(rawCugNumber ?? "").replace(/\D/g, "");
+
+    let termiiNumber = digitsOnly;
+    if (termiiNumber.startsWith("0")) {
+      termiiNumber = "234" + termiiNumber.slice(1);
+    } else if (termiiNumber.length === 10) {
+      termiiNumber = "234" + termiiNumber;
+    }
 
     try {
       const smsRes = await fetch("https://api.ng.termii.com/api/sms/send", {
@@ -100,6 +108,6 @@ export async function POST(req: Request) {
   return NextResponse.json({
     ok: true,
     requires_otp: true,
-    cugNumber: data.cug_number, 
+    cugNumber: String(data.cug_number),
   });
 }

@@ -1,7 +1,7 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState, useEffect } from "react"; // ADDED useEffect
+import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
 
 type CredentialStatus = "unclaimed" | "claimed" | string;
@@ -132,7 +132,13 @@ function NotFoundModal({ onClose }: { onClose: () => void }) {
       <div className="flex flex-col gap-4 p-5">
         <div className="relative h-[259px] w-[591px] max-w-full overflow-hidden">
           <div className="absolute left-[168px] top-[-64px] h-[387px] w-[580px]">
-            <Image src={ASSETS.notFound} alt="" fill className="object-cover" />
+            <Image
+              src={ASSETS.notFound}
+              alt=""
+              fill
+              className="object-cover"
+              sizes="(max-width: 640px) 100vw, 591px"
+            />
           </div>
           <p className="absolute left-6 top-[92px] w-[253px] text-[32px] font-bold leading-[38px] text-[#1E1E1E]">
             CUG number not found.
@@ -151,17 +157,15 @@ function AlreadyClaimedModal({ onClose }: { onClose: () => void }) {
   return (
     <ModalShell tone="neutral" onClose={onClose}>
       <div className="relative w-full max-w-[591px] overflow-hidden p-6 sm:p-8">
-        {/* 1. The Image (Pinned to the right, behind the text on small screens) */}
         <div className="absolute right-[-40px] top-[-20px] size-[250px] sm:size-[372px] opacity-20 sm:opacity-100 pointer-events-none z-0">
           <Image
             src={ASSETS.alreadyClaimed}
             alt=""
             fill
             className="object-contain sm:object-cover"
+              sizes="(max-width: 640px) 250px, 372px"
           />
         </div>
-
-        {/* 2. The Text Content (Flows naturally, no absolute positioning!) */}
         <div className="relative z-10 flex flex-col gap-6 w-full sm:w-[60%] pt-10 pb-4">
           <h2 className="text-[28px] sm:text-[32px] font-bold leading-tight text-[#1E1E1E]">
             Credentials Already Claimed.
@@ -235,12 +239,10 @@ export default function Home() {
 
   const canSubmit = useMemo(() => cugNumber.trim().length > 0, [cugNumber]);
 
-  // ADDED: Listen for successful OTP validation when returning from /otp!
   useEffect(() => {
     const savedSuccess = sessionStorage.getItem("wifi_success");
     if (savedSuccess) {
       const credential = JSON.parse(savedSuccess);
-      // 👇 CHANGE THIS TO "verify" SO IT STAYS MASKED AS ********
       setUi({ kind: "verify", credential }); 
       sessionStorage.removeItem("wifi_success");
     }
@@ -269,9 +271,7 @@ export default function Home() {
 
     const body = (await res.json().catch(() => null));
 
-    // ROUTING LOGIC!
     if (body?.ok && body?.requires_otp) {
-      // Pass the CUG number in the URL so the OTP page knows who it is
       router.push(`/otp?cug=${body.cugNumber}`);
       return;
     }
@@ -326,44 +326,44 @@ export default function Home() {
 
   return (
     <div className="relative min-h-screen bg-white">
-      {ui.kind === "loading" && (
-        <LoadingOverlay />
-      )}
+      {ui.kind === "loading" && <LoadingOverlay />}
 
       {showBaseLayout && (
-        <>
-          <div className="absolute left-1/2 top-4 h-[120px] w-[180px] -translate-x-1/2 sm:top-[30px] sm:h-[149.9px] sm:w-[212px]">
+        <div className="mx-auto flex w-full max-w-[1040px] flex-col items-center px-4 pt-10 pb-20 sm:pt-12">
+          
+          {/* LOGO */}
+          <div className="relative h-[100px] w-[150px] shrink-0 sm:h-[130px] sm:w-[190px]">
             <Image
               src={ASSETS.logo}
               alt="Dodopho Consultancy"
               fill
               className="object-contain"
+              sizes="(max-width: 640px) 150px, 190px"
               priority
             />
           </div>
 
-          <div className="mx-auto flex w-full max-w-[682px] flex-col items-center gap-[32px] px-4 pt-[160px] pb-10 sm:pt-[190px] md:absolute md:left-1/2 md:top-[210px] md:-translate-x-1/2 md:px-0 md:gap-[44px]">
-            <div className="w-full text-center not-italic">
-              <h1
-                className="bg-white text-center text-[32px] font-extrabold leading-[120%] tracking-[-0.04em] text-black sm:text-[40px] md:text-[62px]"
-              >
-                <span className="text-[#757575]">Get Your Campus</span>{" "}
-                <br />
-                Wi-Fi Credentials.
-              </h1>
-              <p className="mx-auto mt-3 w-full max-w-[474px] text-[14px] leading-[20px] text-[#5A5A5A] sm:text-[16px] sm:leading-[22px]">
-                Enter your CUG number below to retrieve your personal internet
-                password and access locations.
-              </p>
-            </div>
+          {/* HEADER TEXT */}
+          <div className="mt-8 flex w-full max-w-[682px] flex-col items-center text-center sm:mt-10">
+            <h1 className="text-[32px] font-extrabold leading-[1.2] tracking-[-0.04em] text-black sm:text-[40px] md:text-[62px]">
+              <span className="text-[#757575]">Get Your Campus</span> <br />
+              Wi-Fi Credentials.
+            </h1>
+            <p className="mt-4 w-full max-w-[474px] text-[14px] leading-relaxed text-[#5A5A5A] sm:text-[16px]">
+              Enter your CUG number below to retrieve your personal internet
+              password and access locations.
+            </p>
+          </div>
 
-            <div className="flex w-full flex-col items-center gap-4">
-              <div className="w-full max-w-[502px]">
+          {/* FORM AREA */}
+          <div className="mt-8 flex w-full max-w-[600px] flex-col items-center gap-4">
+            <div className="flex w-full flex-col items-center justify-center gap-4 sm:flex-row">
+              <div className="w-full">
                 <input
                   value={cugNumber}
                   onChange={(e) => setCugNumber(e.target.value)}
                   placeholder="Enter your CUG number e.g 70457688473992"
-                  className="h-[44px] w-full rounded-[8px] bg-[#EDEEF2] px-3 text-[14px] text-[#111] placeholder:text-[#64748B] outline-none"
+                  className="h-[48px] w-full rounded-[8px] bg-[#EDEEF2] px-4 text-[14px] text-[#111] placeholder:text-[#64748B] outline-none transition-all focus:ring-2 focus:ring-[#33CB63]/50"
                   inputMode="numeric"
                 />
               </div>
@@ -371,452 +371,192 @@ export default function Home() {
                 type="button"
                 onClick={lookup}
                 disabled={!canSubmit}
-                className="h-[40px] w-full max-w-[382px] rounded-[8px] bg-[#33CB63] text-[14px] font-medium leading-6 text-white disabled:opacity-60"
+                className="h-[48px] w-full shrink-0 rounded-[8px] bg-[#33CB63] text-[14px] font-medium text-white transition-all hover:bg-[#2bb356] disabled:opacity-60 sm:w-[160px]"
               >
                 Claim password
               </button>
-              <div className="flex items-center gap-2 px-2 text-center sm:px-0">
-                <div className="grid size-6 place-items-center text-[#975102]">
-                  <svg
-                    width="20"
-                    height="20"
-                    viewBox="0 0 24 24"
-                    fill="none"
-                    xmlns="http://www.w3.org/2000/svg"
-                    aria-hidden="true"
-                  >
-                    <path
-                      d="M12 2a10 10 0 100 20 10 10 0 000-20Zm0 7.2a1.1 1.1 0 110 2.2 1.1 1.1 0 010-2.2Zm1.25 10.05h-2.5V12h2.5v7.25Z"
-                      fill="currentColor"
-                    />
-                  </svg>
-                </div>
-                <p className="text-center text-[13px] text-[#975102] sm:text-[14px] md:text-[16px]">
-                  This benefit is only accessible to CUG numbers
-                </p>
+            </div>
+
+            <div className="mt-1 flex items-center gap-2 px-2 text-center">
+              <div className="grid size-5 place-items-center text-[#975102]">
+                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+                  <path d="M12 2a10 10 0 100 20 10 10 0 000-20Zm0 7.2a1.1 1.1 0 110 2.2 1.1 1.1 0 010-2.2Zm1.25 10.05h-2.5V12h2.5v7.25Z" fill="currentColor" />
+                </svg>
               </div>
+              <p className="text-[13px] text-[#975102] sm:text-[14px]">
+                This benefit is only accessible to CUG numbers
+              </p>
             </div>
           </div>
 
-          <div className="mx-auto mt-10 h-[340px] w-full max-w-[1040px] rounded-[24px] bg-white shadow-[0_20px_40px_rgba(0,0,0,0.08)] sm:h-[420px] md:absolute md:left-1/2 md:top-[658px] md:h-[544px] md:-translate-x-1/2 md:shadow-[0_40px_80px_rgba(0,0,0,0.06)]">
-            <div className="relative h-full w-full overflow-hidden rounded-[24px] bg-white">
-              <Image
-                src={ASSETS.wifi}
-                alt=""
-                fill
-                className="object-cover"
-                priority={false}
-              />
+          {/* WIFI MAP */}
+          <div className="relative mt-12 h-[340px] w-full shrink-0 overflow-hidden rounded-[24px] bg-white shadow-[0_20px_40px_rgba(0,0,0,0.08)] sm:mt-16 sm:h-[420px] md:h-[544px] md:shadow-[0_40px_80px_rgba(0,0,0,0.06)]">
+            <Image
+              src={ASSETS.wifi}
+              alt=""
+              fill
+              className="object-cover"
+              sizes="(max-width: 640px) 100vw, 1040px"
+              loading="eager"
+              priority={false}
+            />
 
-              {/* Wi‑Fi location pins – positioned to match Figma layout */}
-              <div className="pointer-events-none absolute inset-0">
-                {/* Top right bubble */}
-                <div className="pointer-events-auto absolute right-[5%] top-[6%] rotate-[20deg]">
-                  <div className="flex h-[57px] w-[210px] items-center gap-2 rounded-full bg-white px-3 py-2 text-[12px] font-medium text-[#1E1E1E] shadow-[0_20px_40px_rgba(0,0,0,0.12)]">
-                    <div className="grid size-7 place-items-center rounded-full bg-[#FFE9B8] text-[#BF6A02]">
-                      <svg
-                        className="size-4"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        aria-hidden="true"
-                      >
-                        <circle
-                          cx="12"
-                          cy="12"
-                          r="7"
-                          stroke="currentColor"
-                          strokeWidth="1.6"
-                        />
-                        <path
-                          d="M9.5 12.5a3.3 3.3 0 015 0"
-                          stroke="currentColor"
-                          strokeWidth="1.6"
-                          strokeLinecap="round"
-                        />
-                        <path
-                          d="M12 15.25h.01"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                    </div>
-                    <span className="truncate">FUNAABACADEMICB2</span>
+            <div className="pointer-events-none absolute inset-0">
+              {/* Top right bubble */}
+              <div className="pointer-events-auto absolute right-[5%] top-[6%] rotate-[20deg]">
+                <div className="flex h-[57px] w-[210px] items-center gap-2 rounded-full bg-white px-3 py-2 text-[12px] font-medium text-[#1E1E1E] shadow-[0_20px_40px_rgba(0,0,0,0.12)]">
+                  <div className="grid size-7 place-items-center rounded-full bg-[#FFE9B8] text-[#BF6A02]">
+                    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                      <circle cx="12" cy="12" r="7" /><path d="M9.5 12.5a3.3 3.3 0 015 0" strokeLinecap="round" /><path d="M12 15.25h.01" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
                   </div>
+                  <span className="truncate">FUNAABACADEMICB2</span>
                 </div>
+              </div>
 
-                {/* Top left bubble */}
-                <div className="pointer-events-auto absolute left-[12%] top-[20%] -rotate-[22deg]">
-                  <div className="flex h-[57px] w-[196px] items-center gap-2 rounded-full bg-white px-3 py-2 text-[12px] font-medium text-[#1E1E1E] shadow-[0_20px_40px_rgba(0,0,0,0.12)]">
-                    <div className="grid size-7 place-items-center rounded-full bg-[#FFE9B8] text-[#BF6A02]">
-                      <svg
-                        className="size-4"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        aria-hidden="true"
-                      >
-                        <circle
-                          cx="12"
-                          cy="12"
-                          r="7"
-                          stroke="currentColor"
-                          strokeWidth="1.6"
-                        />
-                        <path
-                          d="M9.5 12.5a3.3 3.3 0 015 0"
-                          stroke="currentColor"
-                          strokeWidth="1.6"
-                          strokeLinecap="round"
-                        />
-                        <path
-                          d="M12 15.25h.01"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                    </div>
-                    <span className="truncate">FUNAAB‑DUFARMS</span>
+              {/* Top left bubble */}
+              <div className="pointer-events-auto absolute left-[12%] top-[20%] -rotate-[22deg]">
+                <div className="flex h-[57px] w-[196px] items-center gap-2 rounded-full bg-white px-3 py-2 text-[12px] font-medium text-[#1E1E1E] shadow-[0_20px_40px_rgba(0,0,0,0.12)]">
+                  <div className="grid size-7 place-items-center rounded-full bg-[#FFE9B8] text-[#BF6A02]">
+                    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                      <circle cx="12" cy="12" r="7" /><path d="M9.5 12.5a3.3 3.3 0 015 0" strokeLinecap="round" /><path d="M12 15.25h.01" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
                   </div>
+                  <span className="truncate">FUNAAB‑DUFARMS</span>
                 </div>
+              </div>
 
-                {/* Center top bubble */}
-                <div className="pointer-events-auto absolute left-1/2 top-[5%] -translate-x-1/2">
-                  <div className="flex h-[57px] w-[233px] items-center gap-2 rounded-full bg-white px-3 py-2 text-[12px] font-medium text-[#1E1E1E] shadow-[0_20px_40px_rgba(0,0,0,0.12)]">
-                    <div className="grid size-7 place-items-center rounded-full bg-[#FFE9B8] text-[#BF6A02]">
-                      <svg
-                        className="size-4"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        aria-hidden="true"
-                      >
-                        <circle
-                          cx="12"
-                          cy="12"
-                          r="7"
-                          stroke="currentColor"
-                          strokeWidth="1.6"
-                        />
-                        <path
-                          d="M9.5 12.5a3.3 3.3 0 015 0"
-                          stroke="currentColor"
-                          strokeWidth="1.6"
-                          strokeLinecap="round"
-                        />
-                        <path
-                          d="M12 15.25h.01"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                    </div>
-                    <span className="truncate">SUG AP RADIO</span>
+              {/* Center top bubble */}
+              <div className="pointer-events-auto absolute left-1/2 top-[5%] -translate-x-1/2">
+                <div className="flex h-[57px] w-[233px] items-center gap-2 rounded-full bg-white px-3 py-2 text-[12px] font-medium text-[#1E1E1E] shadow-[0_20px_40px_rgba(0,0,0,0.12)]">
+                  <div className="grid size-7 place-items-center rounded-full bg-[#FFE9B8] text-[#BF6A02]">
+                    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                      <circle cx="12" cy="12" r="7" /><path d="M9.5 12.5a3.3 3.3 0 015 0" strokeLinecap="round" /><path d="M12 15.25h.01" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
                   </div>
+                  <span className="truncate">SUG AP RADIO</span>
                 </div>
+              </div>
 
-                {/* Bottom left bubble */}
-                <div className="pointer-events-auto absolute left-[10%] bottom-[18%]">
-                  <div className="flex h-[57px] w-[233px] items-center gap-2 rounded-full bg-white px-3 py-2 text-[12px] font-medium text-[#1E1E1E] shadow-[0_20px_40px_rgba(0,0,0,0.12)]">
-                    <div className="grid size-7 place-items-center rounded-full bg-[#FFE9B8] text-[#BF6A02]">
-                      <svg
-                        className="size-4"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        aria-hidden="true"
-                      >
-                        <circle
-                          cx="12"
-                          cy="12"
-                          r="7"
-                          stroke="currentColor"
-                          strokeWidth="1.6"
-                        />
-                        <path
-                          d="M9.5 12.5a3.3 3.3 0 015 0"
-                          stroke="currentColor"
-                          strokeWidth="1.6"
-                          strokeLinecap="round"
-                        />
-                        <path
-                          d="M12 15.25h.01"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                    </div>
-                    <span className="truncate">FUNAABCOLMAS</span>
+              {/* Bottom left bubble */}
+              <div className="pointer-events-auto absolute bottom-[18%] left-[10%]">
+                <div className="flex h-[57px] w-[233px] items-center gap-2 rounded-full bg-white px-3 py-2 text-[12px] font-medium text-[#1E1E1E] shadow-[0_20px_40px_rgba(0,0,0,0.12)]">
+                  <div className="grid size-7 place-items-center rounded-full bg-[#FFE9B8] text-[#BF6A02]">
+                    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                      <circle cx="12" cy="12" r="7" /><path d="M9.5 12.5a3.3 3.3 0 015 0" strokeLinecap="round" /><path d="M12 15.25h.01" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
                   </div>
+                  <span className="truncate">FUNAABCOLMAS</span>
                 </div>
+              </div>
 
-                {/* Right mid bubble */}
-                <div className="pointer-events-auto absolute right-[8%] top-[32%] rotate-7">
-                  <div className="flex h-[57px] w-[192px] items-center gap-2 rounded-full bg-white px-3 py-2 text-[12px] font-medium text-[#1E1E1E] shadow-[0_20px_40px_rgba(0,0,0,0.12)]">
-                    <div className="grid size-7 place-items-center rounded-full bg-[#FFE9B8] text-[#BF6A02]">
-                      <svg
-                        className="size-4"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        aria-hidden="true"
-                      >
-                        <circle
-                          cx="12"
-                          cy="12"
-                          r="7"
-                          stroke="currentColor"
-                          strokeWidth="1.6"
-                        />
-                        <path
-                          d="M9.5 12.5a3.3 3.3 0 015 0"
-                          stroke="currentColor"
-                          strokeWidth="1.6"
-                          strokeLinecap="round"
-                        />
-                        <path
-                          d="M12 15.25h.01"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                    </div>
-                    <span className="truncate">FUNAAB‑ENGINEERING</span>
+              {/* Right mid bubble */}
+              <div className="pointer-events-auto absolute right-[8%] top-[32%] rotate-6">
+                <div className="flex h-[57px] w-[192px] items-center gap-2 rounded-full bg-white px-3 py-2 text-[12px] font-medium text-[#1E1E1E] shadow-[0_20px_40px_rgba(0,0,0,0.12)]">
+                  <div className="grid size-7 place-items-center rounded-full bg-[#FFE9B8] text-[#BF6A02]">
+                    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                      <circle cx="12" cy="12" r="7" /><path d="M9.5 12.5a3.3 3.3 0 015 0" strokeLinecap="round" /><path d="M12 15.25h.01" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
                   </div>
+                  <span className="truncate">FUNAAB‑ENGINEERING</span>
                 </div>
+              </div>
 
-                {/* Bottom center bubble */}
-                <div className="pointer-events-auto absolute bottom-[8%] left-1/2 -translate-x-1/2">
-                  <div className="flex h-[57px] w-[210px] items-center gap-2 rounded-full bg-white px-3 py-2 text-[12px] font-medium text-[#1E1E1E] shadow-[0_20px_40px_rgba(0,0,0,0.12)]">
-                    <div className="grid size-7 place-items-center rounded-full bg-[#FFE9B8] text-[#BF6A02]">
-                      <svg
-                        className="size-4"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        aria-hidden="true"
-                      >
-                        <circle
-                          cx="12"
-                          cy="12"
-                          r="7"
-                          stroke="currentColor"
-                          strokeWidth="1.6"
-                        />
-                        <path
-                          d="M9.5 12.5a3.3 3.3 0 015 0"
-                          stroke="currentColor"
-                          strokeWidth="1.6"
-                          strokeLinecap="round"
-                        />
-                        <path
-                          d="M12 15.25h.01"
-                          stroke="currentColor"
-                          strokeWidth="2"
-                          strokeLinecap="round"
-                        />
-                      </svg>
-                    </div>
-                    <span className="truncate">COLANIMPHASE2</span>
+              {/* Bottom center bubble */}
+              <div className="pointer-events-auto absolute bottom-[8%] left-1/2 -translate-x-1/2">
+                <div className="flex h-[57px] w-[210px] items-center gap-2 rounded-full bg-white px-3 py-2 text-[12px] font-medium text-[#1E1E1E] shadow-[0_20px_40px_rgba(0,0,0,0.12)]">
+                  <div className="grid size-7 place-items-center rounded-full bg-[#FFE9B8] text-[#BF6A02]">
+                    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                      <circle cx="12" cy="12" r="7" /><path d="M9.5 12.5a3.3 3.3 0 015 0" strokeLinecap="round" /><path d="M12 15.25h.01" strokeWidth="2" strokeLinecap="round" />
+                    </svg>
                   </div>
+                  <span className="truncate">COLANIMPHASE2</span>
                 </div>
               </div>
             </div>
           </div>
-        </>
+        </div>
       )}
 
-      {ui.kind === "notFound" && (
-        <NotFoundModal onClose={() => setUi({ kind: "idle" })} />
-      )}
+      {/* MODALS */}
+      {ui.kind === "notFound" && <NotFoundModal onClose={() => setUi({ kind: "idle" })} />}
+      {ui.kind === "alreadyClaimed" && <AlreadyClaimedModal onClose={() => setUi({ kind: "idle" })} />}
 
-      {ui.kind === "alreadyClaimed" && (
-        <AlreadyClaimedModal onClose={() => setUi({ kind: "idle" })} />
-      )}
-
+      {/* VERIFY / SUCCESS VIEW (Responsive fix applied here too!) */}
       {(ui.kind === "verify" || ui.kind === "success") && (
-        <>
+        <div className="flex min-h-screen flex-col items-center justify-center px-4 py-20">
           <CloseChip onClick={() => setUi({ kind: "idle" })} />
-          <div className="mx-auto w-full max-w-[430px] px-4 pt-[140px] pb-10 md:absolute md:left-1/2 md:top-[199px] md:-translate-x-1/2 md:px-0 md:pb-0">
+          
+          <div className="mx-auto w-full max-w-[430px]">
             <div className="flex flex-col items-center gap-8">
               <div className="w-full">
                 <div className="flex flex-col items-center gap-6">
                   <div className="flex flex-col items-center gap-4 text-center">
                     <div className="grid size-11 place-items-center rounded-full bg-[#F5F5F5] text-[#757575]">
-                      <svg
-                        className="size-6"
-                        viewBox="0 0 24 24"
-                        fill="none"
-                        xmlns="http://www.w3.org/2000/svg"
-                        aria-hidden="true"
-                      >
-                        <path
-                          d="M12 2a10 10 0 100 20 10 10 0 000-20Z"
-                          stroke="currentColor"
-                          strokeWidth="1.6"
-                        />
-                        <path
-                          d="M7.5 11.5a6.2 6.2 0 019 0M9.5 14a3.3 3.3 0 015 0"
-                          stroke="currentColor"
-                          strokeWidth="1.6"
-                          strokeLinecap="round"
-                        />
-                        <path
-                          d="M12 17.25h.01"
-                          stroke="currentColor"
-                          strokeWidth="2.5"
-                          strokeLinecap="round"
-                        />
+                      <svg className="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                        <path d="M12 2a10 10 0 100 20 10 10 0 000-20Z" /><path d="M7.5 11.5a6.2 6.2 0 019 0M9.5 14a3.3 3.3 0 015 0" strokeLinecap="round" /><path d="M12 17.25h.01" strokeWidth="2.5" strokeLinecap="round" />
                       </svg>
                     </div>
                     <div>
-                      <p className="text-[24px] font-medium leading-9 text-[#1E1E1E]">
-                        Your Internet Credential
-                      </p>
-                      <p className="mt-2 text-[14px] leading-4 text-[#757575]">
-                        Stay connected each time you&apos;re around these areas.
-                      </p>
+                      <p className="text-[24px] font-medium leading-9 text-[#1E1E1E]">Your Internet Credential</p>
+                      <p className="mt-2 text-[14px] leading-4 text-[#757575]">Stay connected each time you&apos;re around these areas.</p>
                     </div>
                   </div>
 
                   <div className="h-px w-full bg-black/10" />
 
-                  <div className="w-full space-y-2">
+                  <div className="w-full space-y-4">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-2">
                         <div className="grid size-11 place-items-center rounded-full bg-[#F5F5F5] text-[#B3B3B3]">
-                          <svg
-                            className="size-6"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                            aria-hidden="true"
-                          >
-                            <path
-                              d="M12 12a4.5 4.5 0 100-9 4.5 4.5 0 000 9Z"
-                              stroke="currentColor"
-                              strokeWidth="1.6"
-                            />
-                            <path
-                              d="M4 21a8 8 0 0116 0"
-                              stroke="currentColor"
-                              strokeWidth="1.6"
-                              strokeLinecap="round"
-                            />
+                          <svg className="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                            <path d="M12 12a4.5 4.5 0 100-9 4.5 4.5 0 000 9Z" /><path d="M4 21a8 8 0 0116 0" strokeLinecap="round" />
                           </svg>
                         </div>
-                        <p className="text-[13px] font-medium text-[#B3B3B3] sm:text-[14px]">
-                          Name
-                        </p>
+                        <p className="text-[13px] font-medium text-[#B3B3B3] sm:text-[14px]">Name</p>
                       </div>
-                      <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">
-                        {ui.kind === "verify"
-                          ? ui.credential.fullName
-                          : ui.credential.fullName}
-                      </p>
+                      <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">{ui.credential.fullName}</p>
                     </div>
 
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-2">
                         <div className="grid size-11 place-items-center rounded-full bg-[#F5F5F5] text-[#B3B3B3]">
-                          <svg
-                            className="size-6"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                            aria-hidden="true"
-                          >
-                            <path
-                              d="M7 20v-7a5 5 0 0110 0v7"
-                              stroke="currentColor"
-                              strokeWidth="1.6"
-                              strokeLinecap="round"
-                            />
-                            <path
-                              d="M9 4h6"
-                              stroke="currentColor"
-                              strokeWidth="1.6"
-                              strokeLinecap="round"
-                            />
+                          <svg className="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                            <path d="M7 20v-7a5 5 0 0110 0v7" strokeLinecap="round" /><path d="M9 4h6" strokeLinecap="round" />
                           </svg>
                         </div>
-                        <p className="text-[13px] font-medium text-[#B3B3B3] sm:text-[14px]">
-                          Department
-                        </p>
+                        <p className="text-[13px] font-medium text-[#B3B3B3] sm:text-[14px]">Department</p>
                       </div>
-                      <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">
-                        {ui.kind === "verify"
-                          ? ui.credential.department
-                          : ui.credential.department}
-                      </p>
+                      <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">{ui.credential.department}</p>
                     </div>
 
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-2">
                         <div className="grid size-11 place-items-center rounded-full bg-[#F5F5F5] text-[#B3B3B3]">
-                          <svg
-                            className="size-6"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            xmlns="http://www.w3.org/2000/svg"
-                            aria-hidden="true"
-                          >
-                            <path
-                              d="M17 10h-1V8a4 4 0 10-8 0v2H7a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2Z"
-                              stroke="currentColor"
-                              strokeWidth="1.6"
-                            />
+                          <svg className="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                            <path d="M17 10h-1V8a4 4 0 10-8 0v2H7a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2Z" />
                           </svg>
                         </div>
-                        <p className="whitespace-pre text-[13px] font-medium text-[#B3B3B3] sm:text-[14px]">
-                          Your  Internet password
-                        </p>
+                        <p className="text-[13px] font-medium text-[#B3B3B3] sm:text-[14px]">Your Internet password</p>
                       </div>
 
                       {ui.kind === "verify" ? (
-                        <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">
-                          ******************
-                        </p>
+                        <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">******************</p>
                       ) : (
                         <div className="flex items-center gap-2">
-                          <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">
-                            {ui.credential.password}
-                          </p>
+                          <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">{ui.credential.password}</p>
                           <button
                             type="button"
                             onClick={async () => {
-                              await navigator.clipboard.writeText(
-                                ui.credential.password,
-                              );
+                              await navigator.clipboard.writeText(ui.credential.password);
                               setCopied(true);
                               window.setTimeout(() => setCopied(false), 2500);
                             }}
                             className="grid size-6 place-items-center text-[#757575] hover:text-black"
                             aria-label="Copy password"
                           >
-                            <svg
-                              className="size-5"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              xmlns="http://www.w3.org/2000/svg"
-                              aria-hidden="true"
-                            >
-                              <path
-                                d="M9 9h10v12H9V9Z"
-                                stroke="currentColor"
-                                strokeWidth="1.6"
-                              />
-                              <path
-                                d="M5 15H4a1 1 0 01-1-1V4a1 1 0 011-1h10a1 1 0 011 1v1"
-                                stroke="currentColor"
-                                strokeWidth="1.6"
-                                strokeLinecap="round"
-                              />
+                            <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                              <path d="M9 9h10v12H9V9Z" /><path d="M5 15H4a1 1 0 01-1-1V4a1 1 0 011-1h10a1 1 0 011 1v1" strokeLinecap="round" />
                             </svg>
                           </button>
                         </div>
@@ -829,20 +569,19 @@ export default function Home() {
               <button
                 type="button"
                 onClick={ui.kind === "verify" ? claim : () => setUi({ kind: "idle" })}
-                className="h-10 w-full rounded-[8px] bg-[#33CB63] text-[14px] font-medium leading-6 text-white"
+                className="h-[48px] w-full rounded-[8px] bg-[#33CB63] text-[14px] font-medium text-white transition-all hover:bg-[#2bb356]"
               >
-                {ui.kind === "verify" ? "Claim password" : "Claimed"}
+                {ui.kind === "verify" ? "Claim password" : "Done"}
               </button>
             </div>
+            
+            <p className="mt-6 text-center text-[13px] font-medium text-[#757575] sm:text-[14px]">
+              {ui.kind === "verify" ? "To access your password click on the button" : "Keep this password secure."}
+            </p>
           </div>
-
-          <p className="mt-4 px-6 text-center text-[13px] font-medium leading-6 text-[#757575] md:absolute md:left-1/2 md:top-[638px] md:-translate-x-1/2 md:px-0 md:text-[14px]">
-            {ui.kind === "verify"
-              ? "To access your password click on the button"
-              : "Keep this password secure."}
-          </p>
-        </>
+        </div>
       )}
+
       {copied && <PasswordClaimedToast onClose={() => setCopied(false)} />}
     </div>
   );
