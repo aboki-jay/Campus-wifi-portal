@@ -3,6 +3,7 @@
 import Image from "next/image";
 import { useMemo, useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
+import { Wifi } from "@/components/ui/wifi";
 
 type CredentialStatus = "unclaimed" | "claimed" | string;
 
@@ -163,7 +164,7 @@ function AlreadyClaimedModal({ onClose }: { onClose: () => void }) {
             alt=""
             fill
             className="object-contain sm:object-cover"
-              sizes="(max-width: 640px) 250px, 372px"
+            sizes="(max-width: 640px) 250px, 372px"
           />
         </div>
         <div className="relative z-10 flex flex-col gap-6 w-full sm:w-[60%] pt-10 pb-4">
@@ -390,7 +391,7 @@ export default function Home() {
           </div>
 
           {/* WIFI MAP */}
-          <div className="relative mt-12 h-[340px] w-full shrink-0 overflow-hidden rounded-[24px] bg-white shadow-[0_20px_40px_rgba(0,0,0,0.08)] sm:mt-16 sm:h-[420px] md:h-[544px] md:shadow-[0_40px_80px_rgba(0,0,0,0.06)]">
+          <div className="relative mt-12 h-[340px] w-full shrink-0 overflow-hidden rounded-none bg-transparent shadow-none sm:mt-16 sm:h-[420px] md:h-[544px]">
             <Image
               src={ASSETS.wifi}
               alt=""
@@ -401,7 +402,8 @@ export default function Home() {
               priority={false}
             />
 
-            <div className="pointer-events-none absolute inset-0">
+            {/* Desktop / tablet layout: pinned bubbles (hidden on mobile) */}
+            <div className="pointer-events-none absolute inset-0 hidden md:block">
               {/* Top right bubble */}
               <div className="pointer-events-auto absolute right-[5%] top-[6%] rotate-[20deg]">
                 <div className="flex h-[57px] w-[210px] items-center gap-2 rounded-full bg-white px-3 py-2 text-[12px] font-medium text-[#1E1E1E] shadow-[0_20px_40px_rgba(0,0,0,0.12)]">
@@ -482,7 +484,7 @@ export default function Home() {
       {ui.kind === "notFound" && <NotFoundModal onClose={() => setUi({ kind: "idle" })} />}
       {ui.kind === "alreadyClaimed" && <AlreadyClaimedModal onClose={() => setUi({ kind: "idle" })} />}
 
-      {/* VERIFY / SUCCESS VIEW (Responsive fix applied here too!) */}
+      {/* VERIFY / SUCCESS VIEW */}
       {(ui.kind === "verify" || ui.kind === "success") && (
         <div className="flex min-h-screen flex-col items-center justify-center px-4 py-20">
           <CloseChip onClick={() => setUi({ kind: "idle" })} />
@@ -491,11 +493,11 @@ export default function Home() {
             <div className="flex flex-col items-center gap-8">
               <div className="w-full">
                 <div className="flex flex-col items-center gap-6">
+                  
+                  {/* --- THIS IS WHERE THE ANIMATED ICON LIVES NOW! --- */}
                   <div className="flex flex-col items-center gap-4 text-center">
                     <div className="grid size-11 place-items-center rounded-full bg-[#F5F5F5] text-[#757575]">
-                      <svg className="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                        <path d="M12 2a10 10 0 100 20 10 10 0 000-20Z" /><path d="M7.5 11.5a6.2 6.2 0 019 0M9.5 14a3.3 3.3 0 015 0" strokeLinecap="round" /><path d="M12 17.25h.01" strokeWidth="2.5" strokeLinecap="round" />
-                      </svg>
+                      <Wifi className="size-6" />
                     </div>
                     <div>
                       <p className="text-[24px] font-medium leading-9 text-[#1E1E1E]">Your Internet Credential</p>
