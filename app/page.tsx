@@ -346,7 +346,6 @@ export default function Home() {
             <div className="w-full text-center not-italic">
               <h1
                 className="bg-white text-center text-[32px] font-extrabold leading-[120%] tracking-[-0.04em] text-black sm:text-[40px] md:text-[62px]"
-                style={{ fontFamily: "Geist", backgroundClip: "unset", WebkitBackgroundClip: "unset" }}
               >
                 <span className="text-[#757575]">Get Your Campus</span>{" "}
                 <br />
