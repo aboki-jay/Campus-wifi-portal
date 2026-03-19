@@ -1,10 +1,10 @@
 "use client";
 
-import { useState, useRef, useEffect, KeyboardEvent } from "react";
+import { useState, useRef, useEffect, KeyboardEvent, Suspense } from "react";
 import { ChevronLeft } from "lucide-react";
 import { useRouter, useSearchParams } from "next/navigation"; 
 
-export default function OTPVerification() {
+function OTPForm() {
   const router = useRouter(); 
   const searchParams = useSearchParams(); 
   const [otp, setOtp] = useState<string[]>(new Array(6).fill(""));
@@ -161,5 +161,13 @@ export default function OTPVerification() {
         </p>
       </div>
     </div>
+  );
+}
+
+export default function OTPVerification() {
+  return (
+    <Suspense fallback={<div className="flex min-h-screen items-center justify-center">Loading...</div>}>
+      <OTPForm />
+    </Suspense>
   );
 }
