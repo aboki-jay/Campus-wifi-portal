@@ -112,6 +112,8 @@ export default function OTPVerification() {
               type="text"
               inputMode="numeric"
               maxLength={1}
+              aria-label={`OTP digit ${index + 1}`}
+              title={`OTP digit ${index + 1}`}
               disabled={isLocked}
               ref={(el) => {
                 inputRefs.current[index] = el;
