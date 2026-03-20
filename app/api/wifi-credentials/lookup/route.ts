@@ -90,8 +90,8 @@ export async function POST(req: Request) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           to: termiiNumber,
-          from: "N-Alert",
-          sms: `Your Campus Wi-Fi OTP is ${generatedOtp}. It expires in 5 minutes. Do not share this code.`,
+          from: "Dodopho", // <--- UPDATED SENDER ID
+          sms: `[Dodopho] Your Campus Wi-Fi OTP is ${generatedOtp}. Valid for 5 mins. Do not share.`, // <--- BRANDED MESSAGE
           type: "plain",
           channel: "dnd",
           api_key: termiiKey,
