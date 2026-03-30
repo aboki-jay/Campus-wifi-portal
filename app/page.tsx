@@ -385,7 +385,7 @@ export default function Home() {
                 </svg>
               </div>
               <p className="text-[13px] text-[#975102] sm:text-[14px]">
-                This benefit is only accessible to CUG numbers
+                This Wifi benefit is only accessible to CUG numbers
               </p>
             </div>
           </div>
