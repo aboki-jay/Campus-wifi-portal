@@ -18,7 +18,7 @@ export async function POST(req: Request) {
   for (const cug of candidates) {
     const res = await supabase
       .from("wifi_credentials")
-      .select("cug_number, status, password") // <--- ICT PRIVACY FIX: Removed name and department
+      .select("cug_number, full_name, department, status, password")
       .eq("cug_number", cug)
       .maybeSingle();
 
@@ -90,8 +90,8 @@ export async function POST(req: Request) {
         headers: { "Content-Type": "application/json" },
         body: JSON.stringify({
           to: termiiNumber,
-          from: "N-Alert", // <--- TERMII UPDATE: Approved DND Sender ID
-          sms: `[Dodopho] Your Campus Internet credentials PIN is ${generatedOtp}. Valid for 5 mins. Do not share.`, // <--- TERMII UPDATE: Exact Approved Template
+          from: "N-Alert",
+          sms: `Your Campus Wi-Fi OTP is ${generatedOtp}. It expires in 5 minutes. Do not share this code.`,
           type: "plain",
           channel: "dnd",
           api_key: termiiKey,

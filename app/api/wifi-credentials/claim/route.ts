@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/src/lib/supabase";
 import { buildCugCandidates } from "@/src/lib/cug";
@@ -45,8 +46,12 @@ export async function POST(req: Request) {
         ok: true,
         credential: {
           cugNumber: userData.cug_number,
-          fullName: userData.full_name,
+          cug_number: userData.cug_number,
+          full_name: userData.full_name,
           department: userData.department,
+          college: userData.college,
+          level: userData.level,
+          matric_number: userData.matric_number,
           status: "claimed",
           password: userData.password,
         },
@@ -74,8 +79,12 @@ export async function POST(req: Request) {
       ok: true,
       credential: {
         cugNumber: userData.cug_number,
-        fullName: userData.full_name,
+        cug_number: userData.cug_number,
+        full_name: userData.full_name,
         department: userData.department,
+        college: userData.college,
+        level: userData.level,
+        matric_number: userData.matric_number,
         status: "claimed",
         password: userData.password,
       },

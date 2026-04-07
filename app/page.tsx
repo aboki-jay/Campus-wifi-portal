@@ -9,7 +9,12 @@ type CredentialStatus = "unclaimed" | "claimed" | string;
 
 // ICT PRIVACY FIX: Removed fullName and department from the expected data
 type LookupCredential = {
-  cugNumber: string;
+  cug_number: string;
+  full_name: string;
+  department: string;
+  college: string;
+  level: string;
+  matric_number: string;
   status: CredentialStatus;
 };
 
@@ -296,7 +301,7 @@ export default function Home() {
     const res = await fetch("/api/wifi-credentials/claim", {
       method: "POST",
       headers: { "Content-Type": "application/json" },
-      body: JSON.stringify({ cugNumber: ui.credential.cugNumber }),
+      body: JSON.stringify({ cugNumber: ui.credential.cug_number }),
     });
 
     if (res.status === 404) {
@@ -384,7 +389,7 @@ export default function Home() {
                 </svg>
               </div>
               <p className="text-[13px] text-[#975102] sm:text-[14px]">
-                This Wifi benefit is only accessible to CUG numbers
+                This benefit is only accessible to CUG numbers
               </p>
             </div>
           </div>
@@ -506,8 +511,32 @@ export default function Home() {
 
                   <div className="h-px w-full bg-black/10" />
 
-                  {/* ICT PRIVACY FIX: Removed Name & Department Rows entirely */}
+                  {/* CEO UPDATE: Added College, Level, and Matric Number Rows */}
                   <div className="w-full space-y-4">
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="grid size-11 place-items-center rounded-full bg-[#F5F5F5] text-[#B3B3B3]">
+                          <svg className="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                            <path d="M12 12a4.5 4.5 0 100-9 4.5 4.5 0 000 9Z" /><path d="M4 21a8 8 0 0116 0" strokeLinecap="round" />
+                          </svg>
+                        </div>
+                        <p className="text-[13px] font-medium text-[#B3B3B3] sm:text-[14px]">Name</p>
+                      </div>
+                      <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">{ui.credential.full_name}</p>
+                    </div>
+
+                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
+                      <div className="flex items-center gap-2">
+                        <div className="grid size-11 place-items-center rounded-full bg-[#F5F5F5] text-[#B3B3B3]">
+                          <svg className="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                            <path d="M7 20v-7a5 5 0 0110 0v7" strokeLinecap="round" /><path d="M9 4h6" strokeLinecap="round" />
+                          </svg>
+                        </div>
+                        <p className="text-[13px] font-medium text-[#B3B3B3] sm:text-[14px]">Department</p>
+                      </div>
+                      <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">{ui.credential.department}</p>
+                    </div>
+
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-2">
                         <div className="grid size-11 place-items-center rounded-full bg-[#F5F5F5] text-[#B3B3B3]">

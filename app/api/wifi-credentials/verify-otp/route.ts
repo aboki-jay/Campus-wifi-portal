@@ -1,3 +1,4 @@
+export const dynamic = "force-dynamic";
 import { NextResponse } from "next/server";
 import { getSupabaseServerClient } from "@/src/lib/supabase";
 
@@ -44,8 +45,8 @@ export async function POST(req: Request) {
     await supabase.from("wifi_credentials").update(updatePayload).eq("cug_number", cugNumber);
 
     if (newAttempts >= 3) {
-       // 👇 UX TWEAK: Error message updated to 10 minutes!
-       return NextResponse.json({ ok: false, error: "Locked for 10 minutes." }, { status: 429 });
+      // 👇 UX TWEAK: Error message updated to 10 minutes!
+      return NextResponse.json({ ok: false, error: "Locked for 10 minutes." }, { status: 429 });
     }
     return NextResponse.json({ ok: false, error: "Invalid OTP" }, { status: 401 });
   }
@@ -61,14 +62,19 @@ export async function POST(req: Request) {
     })
     .eq("cug_number", cugNumber);
 
+  // 👇 CEO UPDATE: Passing all 7 fields to the frontend, but don't include the password yet!
   return NextResponse.json({
     ok: true,
     credential: {
       cugNumber: data.cug_number,
-      fullName: data.full_name,
+      cug_number: data.cug_number,
+      full_name: data.full_name,
       department: data.department,
-      status: "unclaimed", // Keeps it masked on the frontend!
-      password: data.password 
+      college: data.college,
+      level: data.level,
+      matric_number: data.matric_number,
+      status: "unclaimed" // Keeps the password masked on the frontend!
+      // Notice: password is not returned here!
     }
   });
 }
