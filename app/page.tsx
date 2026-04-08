@@ -1,13 +1,12 @@
 "use client";
 
 import Image from "next/image";
-import { useMemo, useState, useEffect } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { Wifi } from "@/components/ui/wifi";
 
 type CredentialStatus = "unclaimed" | "claimed" | string;
 
-// ICT PRIVACY FIX: Removed fullName and department from the expected data
 type LookupCredential = {
   cug_number: string;
   full_name: string;
@@ -28,12 +27,134 @@ type UiState =
   | { kind: "verify"; credential: LookupCredential }
   | { kind: "success"; credential: ClaimedCredential };
 
+type Hotspot = {
+  label: string;
+  widthClassName: string;
+  desktopClassName: string;
+  tailClassName: string;
+};
+
+type ConnectLocation = {
+  label: string;
+  bgClassName: string;
+  textClassName: string;
+  positionClassName: string;
+};
+
 const ASSETS = {
   logo: "/8c61e5aa887dac818254a63f90dcea65973a45ac.png",
   wifi: "/81d89fdb093acc3c15c1c14ed6692e3af4c156d3.png",
   notFound: "/38df8bc5a73ab2364418df1e7050401784a0fca5.png",
   alreadyClaimed: "/641085efe6785d884e8639682858244205e8cfb5.png",
 } as const;
+
+const HOTSPOTS: readonly Hotspot[] = [
+  {
+    label: "FUNAAB-DUFARMS",
+    widthClassName: "w-[196px]",
+    desktopClassName: "left-[10%] top-[13.5%] -rotate-[22deg]",
+    tailClassName: "left-[28px]",
+  },
+  {
+    label: "SUG AP RADIO",
+    widthClassName: "w-[233px]",
+    desktopClassName: "left-1/2 top-[11%] -translate-x-1/2",
+    tailClassName: "left-[88px]",
+  },
+  {
+    label: "FUNAABACADEMICB2",
+    widthClassName: "w-[210px]",
+    desktopClassName: "right-[10.5%] top-[14.5%] rotate-[20deg]",
+    tailClassName: "right-[24px]",
+  },
+  {
+    label: "FUNAABCOLMAS",
+    widthClassName: "w-[233px]",
+    desktopClassName: "left-[7%] top-[50%]",
+    tailClassName: "right-[34px]",
+  },
+  {
+    label: "FUNAAB-ENGINEERING",
+    widthClassName: "w-[192px]",
+    desktopClassName: "right-[12.5%] top-[39.5%] rotate-[7deg]",
+    tailClassName: "left-[42px]",
+  },
+  {
+    label: "COLANIMPHASE2",
+    widthClassName: "w-[210px]",
+    desktopClassName: "left-1/2 top-[72.5%] -translate-x-1/2 -rotate-[1.5deg]",
+    tailClassName: "right-[30px]",
+  },
+] as const;
+
+const CONNECT_LOCATIONS: readonly ConnectLocation[] = [
+  {
+    label: "1. SPORT CENTER",
+    bgClassName: "bg-[#FDE9D3]",
+    textClassName: "text-[#9D5608]",
+    positionClassName: "left-[5.5%] top-[9%]",
+  },
+  {
+    label: "2. SSANU",
+    bgClassName: "bg-[#E1FDD3]",
+    textClassName: "text-[#194703]",
+    positionClassName: "left-[44%] top-[8.5%]",
+  },
+  {
+    label: "9. ICT",
+    bgClassName: "bg-[#E5E5E5]",
+    textClassName: "text-[#5B5B5B]",
+    positionClassName: "right-[14%] top-[9%]",
+  },
+  {
+    label: "8. HEALTH CENTER",
+    bgClassName: "bg-[#E1FDD3]",
+    textClassName: "text-[#194703]",
+    positionClassName: "left-[14.5%] top-[28%]",
+  },
+  {
+    label: "4. INFORMATION CENTER",
+    bgClassName: "bg-[#E0FEF8]",
+    textClassName: "text-[#046350]",
+    positionClassName: "right-[9%] top-[28%]",
+  },
+  {
+    label: "3. COLMAS",
+    bgClassName: "bg-[#E0FEF8]",
+    textClassName: "text-[#046350]",
+    positionClassName: "left-[9.5%] top-[46%]",
+  },
+  {
+    label: "5. SUB BUILDING",
+    bgClassName: "bg-[#DAD2FD]",
+    textClassName: "text-[#4D26F3]",
+    positionClassName: "left-[39%] top-[46%]",
+  },
+  {
+    label: "7. COLENG",
+    bgClassName: "bg-[#FDE9D3]",
+    textClassName: "text-[#9D5608]",
+    positionClassName: "left-[41.5%] top-[58%]",
+  },
+  {
+    label: "6. DUFARMS",
+    bgClassName: "bg-[#E5E5E5]",
+    textClassName: "text-[#5B5B5B]",
+    positionClassName: "right-[8.5%] top-[58%]",
+  },
+  {
+    label: "11. COLANIMPHASE",
+    bgClassName: "bg-[#E1FDD3]",
+    textClassName: "text-[#194703]",
+    positionClassName: "bottom-[46px] left-[5.5%]",
+  },
+  {
+    label: "10. ACADEMIC BUILDING",
+    bgClassName: "bg-[#DAD2FD]",
+    textClassName: "text-[#4D26F3]",
+    positionClassName: "bottom-[46px] right-[3.5%]",
+  },
+] as const;
 
 function XIcon({ className }: { className?: string }) {
   return (
@@ -49,6 +170,64 @@ function XIcon({ className }: { className?: string }) {
         stroke="currentColor"
         strokeWidth="2"
         strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function InfoIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" fill="currentColor" />
+      <path
+        d="M12 10.1v6M12 7.55h.01"
+        stroke="#FFFFFF"
+        strokeWidth="1.8"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function CautionIcon({ className }: { className?: string }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" fill="currentColor" />
+      <path
+        d="M12 6.75v7M12 17h.01"
+        stroke="#FFFFFF"
+        strokeWidth="1.9"
+        strokeLinecap="round"
+      />
+    </svg>
+  );
+}
+
+function HotspotIcon() {
+  return (
+    <svg
+      className="size-4"
+      viewBox="0 0 24 24"
+      fill="none"
+      xmlns="http://www.w3.org/2000/svg"
+      aria-hidden="true"
+    >
+      <circle cx="12" cy="12" r="10" fill="#FFD76C" />
+      <path
+        d="M12 6.75a3.75 3.75 0 0 0-3.75 3.75c0 2.78 3.75 6.75 3.75 6.75s3.75-3.97 3.75-6.75A3.75 3.75 0 0 0 12 6.75Zm0 5.25a1.5 1.5 0 1 1 0-3 1.5 1.5 0 0 1 0 3Z"
+        fill="#F4B400"
       />
     </svg>
   );
@@ -73,7 +252,7 @@ function LoadingOverlay() {
             Checking the system
           </p>
           <p className="mt-[17px] max-w-[583px] text-[16px] font-medium leading-normal text-[#757575]">
-            We’re checking our system for your internet credentials
+            We&apos;re checking our system for your internet credentials
             <br />
             please be patient..
           </p>
@@ -131,12 +310,92 @@ function ModalShell({
   );
 }
 
+function HowToConnectModal({ onClose }: { onClose: () => void }) {
+  return (
+    <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
+      <div className="w-[633px] max-w-[calc(100vw-32px)] overflow-hidden rounded-[24px] border border-[#B2B2B2] bg-white shadow-[0_24px_60px_rgba(0,0,0,0.18)]">
+        <div className="flex items-start justify-between px-6 pb-4 pt-6 sm:px-8">
+          <div className="space-y-1">
+            <h2 className="text-[24px] font-medium leading-7 text-[#1E1E1E]">
+              How to connect
+            </h2>
+            <p className="text-[14px] leading-[14px] text-[#757575]">
+              This is a step-by-step process on how to connect to our free wifi
+            </p>
+          </div>
+
+          <button
+            type="button"
+            onClick={onClose}
+            className="grid size-8 shrink-0 place-items-center rounded-full bg-[#F5F5F5] text-[#757575] transition-colors hover:text-[#1E1E1E]"
+            aria-label="Close"
+          >
+            <XIcon className="size-[18px]" />
+          </button>
+        </div>
+
+        <div className="px-3 pb-3 sm:px-3">
+          <div className="relative h-[300px] rounded-[16px] bg-[#F9F9F9] px-6 pb-3 pt-[18px]">
+            {CONNECT_LOCATIONS.map((location) => (
+              <span
+                key={location.label}
+                className={`absolute inline-flex rounded-[999px] px-4 py-[7px] text-[16px] font-medium leading-6 sm:text-[18px] ${location.bgClassName} ${location.textClassName} ${location.positionClassName}`}
+              >
+                {location.label}
+              </span>
+            ))}
+
+            <p className="absolute bottom-3 left-6 text-[18px] font-medium leading-7 text-[#757575]">
+              Places to connect to our free wifi
+            </p>
+          </div>
+        </div>
+
+        <div className="overflow-hidden rounded-[24px] bg-white">
+          <div className="bg-[#FBFBFB] px-6 py-4 sm:px-8">
+            <p className="text-[18px] leading-7 text-[#1E1E1E]">
+              <span className="font-medium text-[#B3B3B3]">Step 1: </span>
+              <span className="font-medium">
+                Connect to SSID : NCC-FUNAABWIFI-2023
+              </span>
+            </p>
+            <p className="text-[18px] leading-7 text-[#1E1E1E]">
+              <span className="font-medium">Use the password : </span>12345678
+            </p>
+          </div>
+
+          <div className="bg-[#FBFBFB] px-6 py-4 sm:px-8">
+            <p className="text-[18px] leading-7 text-[#1E1E1E]">
+              <span className="font-medium text-[#B3B3B3]">Step 2: </span>
+              <span className="font-medium">
+                This will redirect you to the Dodopho login page
+              </span>
+            </p>
+            <p className="text-[18px] font-medium leading-7 text-[#1E1E1E]">
+              Enter your CUG number and your password to access the free
+              internet
+            </p>
+          </div>
+
+          <div className="flex items-start gap-2 bg-[#FFF1C2] px-6 py-2 sm:px-8">
+            <CautionIcon className="mt-[2px] size-5 shrink-0 text-[#7A3D00]" />
+            <p className="text-[16px] leading-7 text-[#401B01] sm:text-[18px]">
+              Please when typing your CUG number. It should start without the
+              initial digit e.g 9012345678
+            </p>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
 function NotFoundModal({ onClose }: { onClose: () => void }) {
   return (
     <ModalShell tone="warning" onClose={onClose}>
       <div className="flex flex-col gap-4 p-5">
         <div className="relative h-[259px] w-[591px] max-w-full overflow-hidden">
-          <div className="absolute left-[168px] top-[-64px] h-[387px] w-[580px]">
+          <div className="pointer-events-none absolute left-[168px] top-[-64px] h-[387px] w-[580px]">
             <Image
               src={ASSETS.notFound}
               alt=""
@@ -149,8 +408,8 @@ function NotFoundModal({ onClose }: { onClose: () => void }) {
             CUG number not found.
           </p>
           <p className="absolute left-6 top-[174px] w-[288px] text-[16px] text-[#757575]">
-            Please check your spelling or visit our office at Floral building at
-            SUB
+            Please check your spelling or visit our office behind floral
+            building at SUB.
           </p>
         </div>
       </div>
@@ -162,7 +421,7 @@ function AlreadyClaimedModal({ onClose }: { onClose: () => void }) {
   return (
     <ModalShell tone="neutral" onClose={onClose}>
       <div className="relative w-full max-w-[591px] overflow-hidden p-6 sm:p-8">
-        <div className="absolute right-[-40px] top-[-20px] size-[250px] sm:size-[372px] opacity-20 sm:opacity-100 pointer-events-none z-0">
+        <div className="pointer-events-none absolute right-[-40px] top-[-20px] z-0 size-[250px] opacity-20 sm:size-[372px] sm:opacity-100">
           <Image
             src={ASSETS.alreadyClaimed}
             alt=""
@@ -171,13 +430,13 @@ function AlreadyClaimedModal({ onClose }: { onClose: () => void }) {
             sizes="(max-width: 640px) 250px, 372px"
           />
         </div>
-        <div className="relative z-10 flex flex-col gap-6 w-full sm:w-[60%] pt-10 pb-4">
-          <h2 className="text-[28px] sm:text-[32px] font-bold leading-tight text-[#1E1E1E]">
+        <div className="relative z-10 flex w-full flex-col gap-6 pb-4 pt-10 sm:w-[60%]">
+          <h2 className="text-[28px] font-bold leading-tight text-[#1E1E1E] sm:text-[32px]">
             Credentials Already Claimed.
           </h2>
-          <p className="text-[14px] sm:text-[16px] leading-[1.546] text-[#757575]">
-            Your password has been claimed already. Kindly visit our office at the
-            Floral building at SUB.
+          <p className="text-[14px] leading-[1.546] text-[#757575] sm:text-[16px]">
+            Your password has been claimed already. Kindly visit our office
+            behind floral building at SUB.
           </p>
         </div>
       </div>
@@ -236,26 +495,190 @@ function PasswordClaimedToast({ onClose }: { onClose: () => void }) {
   );
 }
 
+function HotspotBadge({
+  label,
+  widthClassName,
+  className = "",
+  tailClassName,
+}: {
+  label: string;
+  widthClassName: string;
+  className?: string;
+  tailClassName: string;
+}) {
+  return (
+    <div className={className}>
+      <div
+        className={`relative flex h-[57px] ${widthClassName} items-center gap-[4px] rounded-full border border-black/[0.06] bg-white pl-[8px] pr-[16px] shadow-[0px_5px_11px_rgba(0,0,0,0.1),0px_20px_20px_rgba(0,0,0,0.09),0px_46px_27px_rgba(0,0,0,0.05),0px_81px_32px_rgba(0,0,0,0.01),0px_127px_35px_rgba(0,0,0,0)]`}
+      >
+        <span
+          className={`pointer-events-none absolute bottom-[-8px] ${tailClassName} size-[18px] rotate-45 rounded-[0_0_8px_0] border-b border-r border-black/[0.06] bg-white`}
+        />
+        <div className="relative z-10 grid size-7 shrink-0 place-items-center rounded-full bg-[#FFF2C9]">
+          <HotspotIcon />
+        </div>
+        <span className="relative z-10 truncate text-[11.5px] font-medium tracking-[-0.12px] text-[#1E1E1E]">
+          {label}
+        </span>
+      </div>
+    </div>
+  );
+}
+
+function LandingView({
+  cugNumber,
+  canSubmit,
+  onCugChange,
+  onSubmit,
+  onShowGuide,
+}: {
+  cugNumber: string;
+  canSubmit: boolean;
+  onCugChange: (value: string) => void;
+  onSubmit: () => void;
+  onShowGuide: () => void;
+}) {
+  return (
+    <div className="mx-auto flex min-h-screen w-full max-w-[1200px] flex-col items-center overflow-hidden px-5 pb-16 pt-[26px] sm:px-6 md:px-8">
+      <div className="relative h-[84px] w-[164px] sm:h-[110px] sm:w-[182px] md:h-[150px] md:w-[212px]">
+        <Image
+          src={ASSETS.logo}
+          alt="Dodopho Consultancy"
+          fill
+          className="object-contain"
+          sizes="(max-width: 640px) 164px, (max-width: 768px) 182px, 212px"
+          priority
+        />
+      </div>
+
+      <section className="mt-[18px] flex w-full max-w-[682px] flex-col items-center text-center md:mt-[34px]">
+        <h1 className="max-w-[682px] text-[46px] font-medium leading-[0.96] tracking-[-0.06em] text-black sm:text-[54px] md:text-[64px] md:leading-[72px]">
+          <span className="text-[#757575]">Get Your Campus</span>
+          <br />
+          <span className="text-black">Wi-Fi Credentials.</span>
+        </h1>
+
+        <p className="mt-4 max-w-[474px] text-[16px] leading-[1.22] text-[#5A5A5A] sm:text-[18px] md:mt-2 md:text-[18px] md:leading-[22px]">
+          Enter your CUG number below to retrieve your personal internet
+          password and access locations.
+        </p>
+      </section>
+
+      <section className="mt-9 flex w-full max-w-[466px] flex-col items-center gap-4 md:mt-11">
+        <div className="w-full rounded-[8px] bg-[#EDEEF2]">
+          <input
+            value={cugNumber}
+            onChange={(event) => onCugChange(event.target.value)}
+            onKeyDown={(event) => {
+              if (event.key === "Enter" && canSubmit) {
+                onSubmit();
+              }
+            }}
+            placeholder="Enter your CUG number e.g 7012345678"
+            className="h-12 w-full rounded-[8px] bg-transparent px-4 text-[14px] leading-5 text-[#1E1E1E] outline-none placeholder:text-[#64748B]"
+            inputMode="numeric"
+            autoComplete="off"
+          />
+        </div>
+
+        <div className="grid w-full grid-cols-1 gap-3 sm:grid-cols-2 sm:gap-4">
+          <button
+            type="button"
+            onClick={onSubmit}
+            disabled={!canSubmit}
+            className="h-11 rounded-[8px] bg-[#33CB63] px-4 text-[14px] font-medium text-white transition-colors hover:bg-[#28ba58] disabled:cursor-not-allowed disabled:opacity-60"
+          >
+            Claim password
+          </button>
+
+          <button
+            type="button"
+            onClick={onShowGuide}
+            className="h-11 rounded-[8px] bg-[#F0F2FA] px-4 text-[14px] font-medium text-[#1E1E1E] transition-colors hover:bg-[#e8ebf6]"
+          >
+            How to connect
+          </button>
+        </div>
+
+        <div className="flex items-center gap-2 text-center text-[#975102]">
+          <InfoIcon className="size-5 shrink-0" />
+          <p className="text-[14px] leading-5">
+            This benefit is only accessible to CUG numbers
+          </p>
+        </div>
+      </section>
+
+      <section className="mt-[60px] flex w-full max-w-[1040px] flex-col items-center sm:mt-[80px] md:mt-[92px]">
+        <div className="relative h-[290px] w-full max-w-[1040px] sm:h-[420px] md:h-[544px]">
+          <Image
+            src={ASSETS.wifi}
+            alt=""
+            fill
+            className="object-contain"
+            sizes="(max-width: 640px) 100vw, 1040px"
+            priority
+          />
+
+          <div className="absolute inset-0 hidden sm:block">
+            {HOTSPOTS.map((hotspot) => (
+              <HotspotBadge
+                key={hotspot.label}
+                label={hotspot.label}
+                widthClassName={hotspot.widthClassName}
+                className={`absolute ${hotspot.desktopClassName}`}
+                tailClassName={hotspot.tailClassName}
+              />
+            ))}
+          </div>
+        </div>
+
+        <div className="mt-6 flex w-full max-w-[640px] flex-wrap justify-center gap-3 sm:hidden">
+          {HOTSPOTS.map((hotspot) => (
+            <HotspotBadge
+              key={hotspot.label}
+              label={hotspot.label}
+              widthClassName={hotspot.widthClassName}
+              tailClassName="right-[26px]"
+            />
+          ))}
+        </div>
+      </section>
+    </div>
+  );
+}
+
 export default function Home() {
-  const router = useRouter(); 
+  const router = useRouter();
   const [cugNumber, setCugNumber] = useState("");
-  const [ui, setUi] = useState<UiState>({ kind: "idle" });
-  const [copied, setCopied] = useState(false);
-
-  const canSubmit = useMemo(() => cugNumber.trim().length > 0, [cugNumber]);
-
-  useEffect(() => {
-    const savedSuccess = sessionStorage.getItem("wifi_success");
-    if (savedSuccess) {
-      const credential = JSON.parse(savedSuccess);
-      setUi({ kind: "verify", credential }); 
-      sessionStorage.removeItem("wifi_success");
+  const [ui, setUi] = useState<UiState>(() => {
+    if (typeof window === "undefined") {
+      return { kind: "idle" };
     }
-  }, []);
+
+    const savedSuccess = sessionStorage.getItem("wifi_success");
+
+    if (!savedSuccess) {
+      return { kind: "idle" };
+    }
+
+    sessionStorage.removeItem("wifi_success");
+
+    return {
+      kind: "verify",
+      credential: JSON.parse(savedSuccess) as LookupCredential,
+    };
+  });
+  const [copied, setCopied] = useState(false);
+  const [showGuide, setShowGuide] = useState(false);
+
+  const canSubmit = cugNumber.trim().length > 0;
 
   async function lookup() {
     const cug = cugNumber.trim();
-    if (!cug) return;
+
+    if (!cug) {
+      return;
+    }
 
     setUi({ kind: "loading" });
     const res = await fetch("/api/wifi-credentials/lookup", {
@@ -268,13 +691,13 @@ export default function Home() {
       setUi({ kind: "notFound" });
       return;
     }
-    
+
     if (res.status === 409) {
       setUi({ kind: "alreadyClaimed" });
       return;
     }
 
-    const body = (await res.json().catch(() => null));
+    const body = await res.json().catch(() => null);
 
     if (body?.ok && body?.requires_otp) {
       router.push(`/otp?cug=${body.cugNumber}`);
@@ -295,7 +718,9 @@ export default function Home() {
   }
 
   async function claim() {
-    if (ui.kind !== "verify") return;
+    if (ui.kind !== "verify") {
+      return;
+    }
 
     setUi({ kind: "loading" });
     const res = await fetch("/api/wifi-credentials/claim", {
@@ -308,6 +733,7 @@ export default function Home() {
       setUi({ kind: "notFound" });
       return;
     }
+
     if (res.status === 409) {
       setUi({ kind: "alreadyClaimed" });
       return;
@@ -334,236 +760,151 @@ export default function Home() {
       {ui.kind === "loading" && <LoadingOverlay />}
 
       {showBaseLayout && (
-        <div className="mx-auto flex w-full max-w-[1040px] flex-col items-center px-4 pt-10 pb-20 sm:pt-12">
-          
-          {/* LOGO */}
-          <div className="relative h-[100px] w-[150px] shrink-0 sm:h-[130px] sm:w-[190px]">
-            <Image
-              src={ASSETS.logo}
-              alt="Dodopho Consultancy"
-              fill
-              className="object-contain"
-              sizes="(max-width: 640px) 150px, 190px"
-              priority
-            />
-          </div>
-
-          {/* HEADER TEXT */}
-          <div className="mt-8 flex w-full max-w-[682px] flex-col items-center text-center sm:mt-10">
-            <h1 className="text-[32px] font-extrabold leading-[1.2] tracking-[-0.04em] text-black sm:text-[40px] md:text-[62px]">
-              <span className="text-[#757575]">Get Your Campus</span> <br />
-              Wi-Fi Credentials.
-            </h1>
-            <p className="mt-4 w-full max-w-[474px] text-[14px] leading-relaxed text-[#5A5A5A] sm:text-[16px]">
-              Enter your CUG number below to retrieve your personal internet
-              password and access locations.
-            </p>
-          </div>
-
-          {/* FORM AREA */}
-          <div className="mt-8 flex w-full max-w-[600px] flex-col items-center gap-4">
-            <div className="flex w-full flex-col items-center justify-center gap-4 sm:flex-row">
-              <div className="w-full">
-                <input
-                  value={cugNumber}
-                  onChange={(e) => setCugNumber(e.target.value)}
-                  placeholder="Enter your CUG number e.g 70457688473992"
-                  className="h-[48px] w-full rounded-[8px] bg-[#EDEEF2] px-4 text-[14px] text-[#111] placeholder:text-[#64748B] outline-none transition-all focus:ring-2 focus:ring-[#33CB63]/50"
-                  inputMode="numeric"
-                />
-              </div>
-              <button
-                type="button"
-                onClick={lookup}
-                disabled={!canSubmit}
-                className="h-[48px] w-full shrink-0 rounded-[8px] bg-[#33CB63] text-[14px] font-medium text-white transition-all hover:bg-[#2bb356] disabled:opacity-60 sm:w-[160px]"
-              >
-                Claim password
-              </button>
-            </div>
-
-            <div className="mt-1 flex items-center gap-2 px-2 text-center">
-              <div className="grid size-5 place-items-center text-[#975102]">
-                <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                  <path d="M12 2a10 10 0 100 20 10 10 0 000-20Zm0 7.2a1.1 1.1 0 110 2.2 1.1 1.1 0 010-2.2Zm1.25 10.05h-2.5V12h2.5v7.25Z" fill="currentColor" />
-                </svg>
-              </div>
-              <p className="text-[13px] text-[#975102] sm:text-[14px]">
-                This benefit is only accessible to CUG numbers
-              </p>
-            </div>
-          </div>
-
-          {/* WIFI MAP */}
-          <div className="relative mt-12 h-[340px] w-full shrink-0 overflow-hidden rounded-none bg-transparent shadow-none sm:mt-16 sm:h-[420px] md:h-[544px]">
-            <Image
-              src={ASSETS.wifi}
-              alt=""
-              fill
-              className="object-cover"
-              sizes="(max-width: 640px) 100vw, 1040px"
-              loading="eager"
-              priority={false}
-            />
-
-            {/* Desktop / tablet layout: pinned bubbles (hidden on mobile) */}
-            <div className="pointer-events-none absolute inset-0 hidden md:block">
-              {/* Top right bubble */}
-              <div className="pointer-events-auto absolute right-[5%] top-[6%] rotate-[20deg]">
-                <div className="flex h-[57px] w-[210px] items-center gap-2 rounded-full bg-white px-3 py-2 text-[12px] font-medium text-[#1E1E1E] shadow-[0_20px_40px_rgba(0,0,0,0.12)]">
-                  <div className="grid size-7 place-items-center rounded-full bg-[#FFE9B8] text-[#BF6A02]">
-                    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                      <circle cx="12" cy="12" r="7" /><path d="M9.5 12.5a3.3 3.3 0 015 0" strokeLinecap="round" /><path d="M12 15.25h.01" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </div>
-                  <span className="truncate">FUNAABACADEMICB2</span>
-                </div>
-              </div>
-
-              {/* Top left bubble */}
-              <div className="pointer-events-auto absolute left-[12%] top-[20%] -rotate-[22deg]">
-                <div className="flex h-[57px] w-[196px] items-center gap-2 rounded-full bg-white px-3 py-2 text-[12px] font-medium text-[#1E1E1E] shadow-[0_20px_40px_rgba(0,0,0,0.12)]">
-                  <div className="grid size-7 place-items-center rounded-full bg-[#FFE9B8] text-[#BF6A02]">
-                    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                      <circle cx="12" cy="12" r="7" /><path d="M9.5 12.5a3.3 3.3 0 015 0" strokeLinecap="round" /><path d="M12 15.25h.01" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </div>
-                  <span className="truncate">FUNAAB‑DUFARMS</span>
-                </div>
-              </div>
-
-              {/* Center top bubble */}
-              <div className="pointer-events-auto absolute left-1/2 top-[5%] -translate-x-1/2">
-                <div className="flex h-[57px] w-[233px] items-center gap-2 rounded-full bg-white px-3 py-2 text-[12px] font-medium text-[#1E1E1E] shadow-[0_20px_40px_rgba(0,0,0,0.12)]">
-                  <div className="grid size-7 place-items-center rounded-full bg-[#FFE9B8] text-[#BF6A02]">
-                    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                      <circle cx="12" cy="12" r="7" /><path d="M9.5 12.5a3.3 3.3 0 015 0" strokeLinecap="round" /><path d="M12 15.25h.01" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </div>
-                  <span className="truncate">SUG AP RADIO</span>
-                </div>
-              </div>
-
-              {/* Bottom left bubble */}
-              <div className="pointer-events-auto absolute bottom-[18%] left-[10%]">
-                <div className="flex h-[57px] w-[233px] items-center gap-2 rounded-full bg-white px-3 py-2 text-[12px] font-medium text-[#1E1E1E] shadow-[0_20px_40px_rgba(0,0,0,0.12)]">
-                  <div className="grid size-7 place-items-center rounded-full bg-[#FFE9B8] text-[#BF6A02]">
-                    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                      <circle cx="12" cy="12" r="7" /><path d="M9.5 12.5a3.3 3.3 0 015 0" strokeLinecap="round" /><path d="M12 15.25h.01" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </div>
-                  <span className="truncate">FUNAABCOLMAS</span>
-                </div>
-              </div>
-
-              {/* Right mid bubble */}
-              <div className="pointer-events-auto absolute right-[8%] top-[32%] rotate-6">
-                <div className="flex h-[57px] w-[192px] items-center gap-2 rounded-full bg-white px-3 py-2 text-[12px] font-medium text-[#1E1E1E] shadow-[0_20px_40px_rgba(0,0,0,0.12)]">
-                  <div className="grid size-7 place-items-center rounded-full bg-[#FFE9B8] text-[#BF6A02]">
-                    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                      <circle cx="12" cy="12" r="7" /><path d="M9.5 12.5a3.3 3.3 0 015 0" strokeLinecap="round" /><path d="M12 15.25h.01" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </div>
-                  <span className="truncate">FUNAAB‑ENGINEERING</span>
-                </div>
-              </div>
-
-              {/* Bottom center bubble */}
-              <div className="pointer-events-auto absolute bottom-[8%] left-1/2 -translate-x-1/2">
-                <div className="flex h-[57px] w-[210px] items-center gap-2 rounded-full bg-white px-3 py-2 text-[12px] font-medium text-[#1E1E1E] shadow-[0_20px_40px_rgba(0,0,0,0.12)]">
-                  <div className="grid size-7 place-items-center rounded-full bg-[#FFE9B8] text-[#BF6A02]">
-                    <svg className="size-4" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                      <circle cx="12" cy="12" r="7" /><path d="M9.5 12.5a3.3 3.3 0 015 0" strokeLinecap="round" /><path d="M12 15.25h.01" strokeWidth="2" strokeLinecap="round" />
-                    </svg>
-                  </div>
-                  <span className="truncate">COLANIMPHASE2</span>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
+        <LandingView
+          cugNumber={cugNumber}
+          canSubmit={canSubmit}
+          onCugChange={setCugNumber}
+          onSubmit={lookup}
+          onShowGuide={() => setShowGuide(true)}
+        />
       )}
 
-      {/* MODALS */}
-      {ui.kind === "notFound" && <NotFoundModal onClose={() => setUi({ kind: "idle" })} />}
-      {ui.kind === "alreadyClaimed" && <AlreadyClaimedModal onClose={() => setUi({ kind: "idle" })} />}
+      {showGuide && <HowToConnectModal onClose={() => setShowGuide(false)} />}
+      {ui.kind === "notFound" && (
+        <NotFoundModal onClose={() => setUi({ kind: "idle" })} />
+      )}
+      {ui.kind === "alreadyClaimed" && (
+        <AlreadyClaimedModal onClose={() => setUi({ kind: "idle" })} />
+      )}
 
-      {/* VERIFY / SUCCESS VIEW */}
       {(ui.kind === "verify" || ui.kind === "success") && (
         <div className="flex min-h-screen flex-col items-center justify-center px-4 py-20">
           <CloseChip onClick={() => setUi({ kind: "idle" })} />
-          
+
           <div className="mx-auto w-full max-w-[430px]">
             <div className="flex flex-col items-center gap-8">
               <div className="w-full">
                 <div className="flex flex-col items-center gap-6">
-                  
-                  {/* --- THIS IS WHERE THE ANIMATED ICON LIVES NOW! --- */}
                   <div className="flex flex-col items-center gap-4 text-center">
                     <div className="grid size-11 place-items-center rounded-full bg-[#F5F5F5] text-[#757575]">
                       <Wifi className="size-6" />
                     </div>
                     <div>
-                      <p className="text-[24px] font-medium leading-9 text-[#1E1E1E]">Your Internet Credential</p>
-                      <p className="mt-2 text-[14px] leading-4 text-[#757575]">Stay connected each time you&apos;re around these areas.</p>
+                      <p className="text-[24px] font-medium leading-9 text-[#1E1E1E]">
+                        Your Internet Credential
+                      </p>
+                      <p className="mt-2 text-[14px] leading-4 text-[#757575]">
+                        Stay connected each time you&apos;re around these areas.
+                      </p>
                     </div>
                   </div>
 
                   <div className="h-px w-full bg-black/10" />
 
-                  {/* CEO UPDATE: Added College, Level, and Matric Number Rows */}
                   <div className="w-full space-y-4">
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-2">
                         <div className="grid size-11 place-items-center rounded-full bg-[#F5F5F5] text-[#B3B3B3]">
-                          <svg className="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                            <path d="M12 12a4.5 4.5 0 100-9 4.5 4.5 0 000 9Z" /><path d="M4 21a8 8 0 0116 0" strokeLinecap="round" />
+                          <svg
+                            className="size-6"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.6"
+                          >
+                            <path d="M12 12a4.5 4.5 0 100-9 4.5 4.5 0 000 9Z" />
+                            <path
+                              d="M4 21a8 8 0 0116 0"
+                              strokeLinecap="round"
+                            />
                           </svg>
                         </div>
-                        <p className="text-[13px] font-medium text-[#B3B3B3] sm:text-[14px]">Name</p>
+                        <p className="text-[13px] font-medium text-[#B3B3B3] sm:text-[14px]">
+                          Name
+                        </p>
                       </div>
-                      <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">{ui.credential.full_name}</p>
+                      <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">
+                        {ui.credential.full_name}
+                      </p>
                     </div>
 
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-2">
                         <div className="grid size-11 place-items-center rounded-full bg-[#F5F5F5] text-[#B3B3B3]">
-                          <svg className="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                            <path d="M7 20v-7a5 5 0 0110 0v7" strokeLinecap="round" /><path d="M9 4h6" strokeLinecap="round" />
+                          <svg
+                            className="size-6"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.6"
+                          >
+                            <path
+                              d="M7 20v-7a5 5 0 0110 0v7"
+                              strokeLinecap="round"
+                            />
+                            <path d="M9 4h6" strokeLinecap="round" />
                           </svg>
                         </div>
-                        <p className="text-[13px] font-medium text-[#B3B3B3] sm:text-[14px]">Department</p>
+                        <p className="text-[13px] font-medium text-[#B3B3B3] sm:text-[14px]">
+                          Department
+                        </p>
                       </div>
-                      <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">{ui.credential.department}</p>
+                      <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">
+                        {ui.credential.department}
+                      </p>
                     </div>
 
                     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
                       <div className="flex items-center gap-2">
                         <div className="grid size-11 place-items-center rounded-full bg-[#F5F5F5] text-[#B3B3B3]">
-                          <svg className="size-6" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
+                          <svg
+                            className="size-6"
+                            viewBox="0 0 24 24"
+                            fill="none"
+                            stroke="currentColor"
+                            strokeWidth="1.6"
+                          >
                             <path d="M17 10h-1V8a4 4 0 10-8 0v2H7a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2Z" />
                           </svg>
                         </div>
-                        <p className="text-[13px] font-medium text-[#B3B3B3] sm:text-[14px]">Your Internet password</p>
+                        <p className="text-[13px] font-medium text-[#B3B3B3] sm:text-[14px]">
+                          Your Internet password
+                        </p>
                       </div>
 
                       {ui.kind === "verify" ? (
-                        <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">******************</p>
+                        <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">
+                          ******************
+                        </p>
                       ) : (
                         <div className="flex items-center gap-2">
-                          <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">{ui.credential.password}</p>
+                          <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">
+                            {ui.credential.password}
+                          </p>
                           <button
                             type="button"
                             onClick={async () => {
-                              await navigator.clipboard.writeText(ui.credential.password);
+                              await navigator.clipboard.writeText(
+                                ui.credential.password,
+                              );
                               setCopied(true);
                               window.setTimeout(() => setCopied(false), 2500);
                             }}
                             className="grid size-6 place-items-center text-[#757575] hover:text-black"
                             aria-label="Copy password"
                           >
-                            <svg className="size-5" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.6">
-                              <path d="M9 9h10v12H9V9Z" /><path d="M5 15H4a1 1 0 01-1-1V4a1 1 0 011-1h10a1 1 0 011 1v1" strokeLinecap="round" />
+                            <svg
+                              className="size-5"
+                              viewBox="0 0 24 24"
+                              fill="none"
+                              stroke="currentColor"
+                              strokeWidth="1.6"
+                            >
+                              <path d="M9 9h10v12H9V9Z" />
+                              <path
+                                d="M5 15H4a1 1 0 01-1-1V4a1 1 0 011-1h10a1 1 0 011 1v1"
+                                strokeLinecap="round"
+                              />
                             </svg>
                           </button>
                         </div>
@@ -581,9 +922,11 @@ export default function Home() {
                 {ui.kind === "verify" ? "Claim password" : "Done"}
               </button>
             </div>
-            
+
             <p className="mt-6 text-center text-[13px] font-medium text-[#757575] sm:text-[14px]">
-              {ui.kind === "verify" ? "To access your password click on the button" : "Keep this password secure."}
+              {ui.kind === "verify"
+                ? "To access your password click on the button"
+                : "Keep this password secure."}
             </p>
           </div>
         </div>
