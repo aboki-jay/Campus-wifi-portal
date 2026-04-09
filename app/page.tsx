@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Wifi } from "@/components/ui/wifi";
+import { Globe2, GraduationCap, KeyRound, UserRound } from "lucide-react";
 
 type CredentialStatus = "unclaimed" | "claimed" | string;
 
@@ -444,57 +444,6 @@ function AlreadyClaimedModal({ onClose }: { onClose: () => void }) {
   );
 }
 
-function PasswordClaimedToast({ onClose }: { onClose: () => void }) {
-  return (
-    <div className="pointer-events-none fixed inset-x-0 top-6 z-50 flex justify-center">
-      <div className="pointer-events-auto flex w-[550px] max-w-full flex-col overflow-hidden rounded-[16px] border border-[#D9D9D9] bg-white shadow-md">
-        <div className="flex items-center justify-between border-b border-[#D9D9D9] px-4 py-4">
-          <div className="flex items-center gap-2">
-            <div className="grid size-8 place-items-center rounded-full bg-[#F5F5F5] text-[#1E1E1E]">
-              <svg
-                className="size-4"
-                viewBox="0 0 24 24"
-                fill="none"
-                xmlns="http://www.w3.org/2000/svg"
-                aria-hidden="true"
-              >
-                <circle
-                  cx="12"
-                  cy="12"
-                  r="9"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                />
-                <path
-                  d="M9.5 12.5l2 2.5 3-4"
-                  stroke="currentColor"
-                  strokeWidth="1.6"
-                  strokeLinecap="round"
-                  strokeLinejoin="round"
-                />
-              </svg>
-            </div>
-            <p className="text-[16px] font-medium text-[#1E1E1E]">
-              Password claimed
-            </p>
-          </div>
-          <button
-            type="button"
-            onClick={onClose}
-            className="grid size-6 place-items-center text-[#757575] hover:text-black"
-            aria-label="Dismiss"
-          >
-            <XIcon className="size-5" />
-          </button>
-        </div>
-        <div className="px-4 py-3 text-[14px] text-[#1E1E1E]">
-          Keep this password secure.
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function HotspotBadge({
   label,
   widthClassName,
@@ -521,6 +470,31 @@ function HotspotBadge({
           {label}
         </span>
       </div>
+    </div>
+  );
+}
+
+function CredentialField({
+  icon,
+  label,
+  value,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  value: string;
+}) {
+  return (
+    <div className="flex items-center justify-between gap-4">
+      <div className="flex min-w-0 items-center gap-2">
+        <div className="grid size-11 shrink-0 place-items-center rounded-full bg-[#EBFAEF] text-[#33CB63]">
+          {icon}
+        </div>
+        <p className="text-[14px] leading-5 text-[#B3B3B3]">{label}</p>
+      </div>
+
+      <p className="max-w-[220px] text-right text-[16px] font-bold leading-5 text-[#5A5A5A]">
+        {value}
+      </p>
     </div>
   );
 }
@@ -668,7 +642,6 @@ export default function Home() {
       credential: JSON.parse(savedSuccess) as LookupCredential,
     };
   });
-  const [copied, setCopied] = useState(false);
   const [showGuide, setShowGuide] = useState(false);
 
   const canSubmit = cugNumber.trim().length > 0;
@@ -778,152 +751,74 @@ export default function Home() {
       )}
 
       {(ui.kind === "verify" || ui.kind === "success") && (
-        <div className="flex min-h-screen flex-col items-center justify-center px-4 py-20">
+        <div className="relative flex min-h-screen flex-col items-center px-4 py-20">
           <CloseChip onClick={() => setUi({ kind: "idle" })} />
 
-          <div className="mx-auto w-full max-w-[430px]">
+          <div className="mx-auto flex w-full max-w-[430px] flex-1 flex-col justify-center">
             <div className="flex flex-col items-center gap-8">
-              <div className="w-full">
-                <div className="flex flex-col items-center gap-6">
+              <div className="flex w-full flex-col gap-[53px]">
+                <div className="flex w-full flex-col items-center gap-6">
                   <div className="flex flex-col items-center gap-4 text-center">
-                    <div className="grid size-11 place-items-center rounded-full bg-[#F5F5F5] text-[#757575]">
-                      <Wifi className="size-6" />
+                    <div className="grid size-11 place-items-center rounded-full bg-[#33CB63] text-white">
+                      <Globe2 className="size-5" strokeWidth={2.2} />
                     </div>
-                    <div>
+                    <div className="space-y-2">
                       <p className="text-[24px] font-medium leading-9 text-[#1E1E1E]">
                         Your Internet Credential
                       </p>
-                      <p className="mt-2 text-[14px] leading-4 text-[#757575]">
+                      <p className="text-[14px] leading-4 text-[#757575]">
                         Stay connected each time you&apos;re around these areas.
                       </p>
                     </div>
                   </div>
 
-                  <div className="h-px w-full bg-black/10" />
+                  <div className="h-px w-full bg-[#D9D9D9]" />
+                </div>
 
-                  <div className="w-full space-y-4">
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="grid size-11 place-items-center rounded-full bg-[#F5F5F5] text-[#B3B3B3]">
-                          <svg
-                            className="size-6"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.6"
-                          >
-                            <path d="M12 12a4.5 4.5 0 100-9 4.5 4.5 0 000 9Z" />
-                            <path
-                              d="M4 21a8 8 0 0116 0"
-                              strokeLinecap="round"
-                            />
-                          </svg>
-                        </div>
-                        <p className="text-[13px] font-medium text-[#B3B3B3] sm:text-[14px]">
-                          Name
-                        </p>
-                      </div>
-                      <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">
-                        {ui.credential.full_name}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="grid size-11 place-items-center rounded-full bg-[#F5F5F5] text-[#B3B3B3]">
-                          <svg
-                            className="size-6"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.6"
-                          >
-                            <path
-                              d="M7 20v-7a5 5 0 0110 0v7"
-                              strokeLinecap="round"
-                            />
-                            <path d="M9 4h6" strokeLinecap="round" />
-                          </svg>
-                        </div>
-                        <p className="text-[13px] font-medium text-[#B3B3B3] sm:text-[14px]">
-                          Department
-                        </p>
-                      </div>
-                      <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">
-                        {ui.credential.department}
-                      </p>
-                    </div>
-
-                    <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
-                      <div className="flex items-center gap-2">
-                        <div className="grid size-11 place-items-center rounded-full bg-[#F5F5F5] text-[#B3B3B3]">
-                          <svg
-                            className="size-6"
-                            viewBox="0 0 24 24"
-                            fill="none"
-                            stroke="currentColor"
-                            strokeWidth="1.6"
-                          >
-                            <path d="M17 10h-1V8a4 4 0 10-8 0v2H7a2 2 0 00-2 2v6a2 2 0 002 2h10a2 2 0 002-2v-6a2 2 0 00-2-2Z" />
-                          </svg>
-                        </div>
-                        <p className="text-[13px] font-medium text-[#B3B3B3] sm:text-[14px]">
-                          Your Internet password
-                        </p>
-                      </div>
-
-                      {ui.kind === "verify" ? (
-                        <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">
-                          ******************
-                        </p>
-                      ) : (
-                        <div className="flex items-center gap-2">
-                          <p className="text-[15px] font-bold text-[#5A5A5A] sm:text-[16px]">
-                            {ui.credential.password}
-                          </p>
-                          <button
-                            type="button"
-                            onClick={async () => {
-                              await navigator.clipboard.writeText(
-                                ui.credential.password,
-                              );
-                              setCopied(true);
-                              window.setTimeout(() => setCopied(false), 2500);
-                            }}
-                            className="grid size-6 place-items-center text-[#757575] hover:text-black"
-                            aria-label="Copy password"
-                          >
-                            <svg
-                              className="size-5"
-                              viewBox="0 0 24 24"
-                              fill="none"
-                              stroke="currentColor"
-                              strokeWidth="1.6"
-                            >
-                              <path d="M9 9h10v12H9V9Z" />
-                              <path
-                                d="M5 15H4a1 1 0 01-1-1V4a1 1 0 011-1h10a1 1 0 011 1v1"
-                                strokeLinecap="round"
-                              />
-                            </svg>
-                          </button>
-                        </div>
-                      )}
-                    </div>
-                  </div>
+                <div className="flex w-full flex-col gap-2">
+                  <CredentialField
+                    icon={<UserRound className="size-5" strokeWidth={2} />}
+                    label="Name"
+                    value={ui.credential.full_name}
+                  />
+                  <CredentialField
+                    icon={<GraduationCap className="size-5" strokeWidth={2} />}
+                    label="Department"
+                    value={ui.credential.department || ui.credential.college}
+                  />
+                  <CredentialField
+                    icon={<KeyRound className="size-5" strokeWidth={2} />}
+                    label="Your Internet password"
+                    value={
+                      ui.kind === "verify"
+                        ? "******************"
+                        : ui.credential.password
+                    }
+                  />
                 </div>
               </div>
 
-              <button
-                type="button"
-                onClick={ui.kind === "verify" ? claim : () => setUi({ kind: "idle" })}
-                className="h-[48px] w-full rounded-[8px] bg-[#33CB63] text-[14px] font-medium text-white transition-all hover:bg-[#2bb356]"
-              >
-                {ui.kind === "verify" ? "Claim password" : "Done"}
-              </button>
+              <div className="flex w-full flex-col gap-4">
+                <button
+                  type="button"
+                  onClick={ui.kind === "verify" ? claim : undefined}
+                  disabled={ui.kind === "success"}
+                  className="h-[48px] w-full rounded-[8px] bg-[#33CB63] text-[14px] font-medium text-white transition-colors hover:bg-[#2bb356] disabled:cursor-default disabled:hover:bg-[#33CB63]"
+                >
+                  {ui.kind === "verify" ? "Claim password" : "Claimed"}
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => router.push("/help-connecting")}
+                  className="h-[48px] w-full rounded-[8px] border-[1.5px] border-[#1E1E1E] bg-white text-[14px] font-medium text-[#1E1E1E] transition-colors hover:bg-[#F8F8F8]"
+                >
+                  Need help connecting?
+                </button>
+              </div>
             </div>
 
-            <p className="mt-6 text-center text-[13px] font-medium text-[#757575] sm:text-[14px]">
+            <p className="mt-4 text-center text-[14px] font-medium leading-6 text-[#757575]">
               {ui.kind === "verify"
                 ? "To access your password click on the button"
                 : "Keep this password secure."}
@@ -931,8 +826,6 @@ export default function Home() {
           </div>
         </div>
       )}
-
-      {copied && <PasswordClaimedToast onClose={() => setCopied(false)} />}
     </div>
   );
 }
