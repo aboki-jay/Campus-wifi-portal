@@ -1,15 +1,13 @@
 "use client";
 
 import Link from "next/link";
+import styles from "./page.module.css";
 
 type HelpLocation = {
   label: string;
   bgClassName: string;
   textClassName: string;
 };
-
-const CONNECT_HELP_IMAGE =
-  "https://www.figma.com/api/mcp/asset/49ed18bc-d867-4b46-b17f-cbaa56c76682";
 
 const HELP_LOCATIONS: readonly HelpLocation[] = [
   {
@@ -106,8 +104,7 @@ export default function HelpConnectingPage() {
           <div
             role="img"
             aria-label="Illustration showing how to connect devices"
-            className="h-[180px] w-full bg-cover bg-center bg-no-repeat sm:h-[240px] md:h-[291px]"
-            style={{ backgroundImage: `url(${CONNECT_HELP_IMAGE})` }}
+            className={`${styles.heroImage} h-[180px] w-full bg-cover bg-center bg-no-repeat sm:h-[240px] md:h-[291px]`}
           />
         </div>
 
