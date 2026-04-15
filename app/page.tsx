@@ -3,7 +3,7 @@
 import Image from "next/image";
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import { Globe2, GraduationCap, KeyRound, UserRound } from "lucide-react";
+import { Globe2, KeyRound } from "lucide-react";
 
 type CredentialStatus = "unclaimed" | "claimed" | string;
 
@@ -313,13 +313,13 @@ function ModalShell({
 function HowToConnectModal({ onClose }: { onClose: () => void }) {
   return (
     <div className="fixed inset-0 z-50 grid place-items-center bg-black/60 p-4">
-      <div className="w-[633px] max-w-[calc(100vw-32px)] overflow-hidden rounded-[24px] border border-[#B2B2B2] bg-white shadow-[0_24px_60px_rgba(0,0,0,0.18)]">
+      <div className="max-h-[calc(100vh-32px)] w-[633px] max-w-[calc(100vw-32px)] overflow-y-auto rounded-[24px] border border-[#B2B2B2] bg-white shadow-[0_24px_60px_rgba(0,0,0,0.18)]">
         <div className="flex items-start justify-between px-6 pb-4 pt-6 sm:px-8">
           <div className="space-y-1">
-            <h2 className="text-[24px] font-medium leading-7 text-[#1E1E1E]">
+            <h2 className="text-[22px] font-medium leading-7 text-[#1E1E1E] sm:text-[24px]">
               How to connect
             </h2>
-            <p className="text-[14px] leading-[14px] text-[#757575]">
+            <p className="text-[13px] leading-[16px] text-[#757575] sm:text-[14px] sm:leading-[14px]">
               This is a step-by-step process on how to connect to our free wifi
             </p>
           </div>
@@ -335,17 +335,30 @@ function HowToConnectModal({ onClose }: { onClose: () => void }) {
         </div>
 
         <div className="px-3 pb-3 sm:px-3">
-          <div className="relative h-[300px] rounded-[16px] bg-[#F9F9F9] px-6 pb-3 pt-[18px]">
-            {CONNECT_LOCATIONS.map((location) => (
-              <span
-                key={location.label}
-                className={`absolute inline-flex rounded-[999px] px-4 py-[7px] text-[16px] font-medium leading-6 sm:text-[18px] ${location.bgClassName} ${location.textClassName} ${location.positionClassName}`}
-              >
-                {location.label}
-              </span>
-            ))}
+          <div className="rounded-[16px] bg-[#F9F9F9] px-4 pb-3 pt-[18px] sm:px-6">
+            <div className="flex flex-wrap justify-center gap-3 sm:hidden">
+              {CONNECT_LOCATIONS.map((location) => (
+                <span
+                  key={location.label}
+                  className={`inline-flex rounded-[999px] px-3 py-[6px] text-[14px] font-medium leading-5 ${location.bgClassName} ${location.textClassName}`}
+                >
+                  {location.label}
+                </span>
+              ))}
+            </div>
 
-            <p className="absolute bottom-3 left-6 text-[18px] font-medium leading-7 text-[#757575]">
+            <div className="relative hidden h-[300px] sm:block">
+              {CONNECT_LOCATIONS.map((location) => (
+                <span
+                  key={location.label}
+                  className={`absolute inline-flex rounded-[999px] px-4 py-[7px] text-[18px] font-medium leading-6 ${location.bgClassName} ${location.textClassName} ${location.positionClassName}`}
+                >
+                  {location.label}
+                </span>
+              ))}
+            </div>
+
+            <p className="mt-4 text-[15px] font-medium leading-6 text-[#757575] sm:absolute sm:bottom-3 sm:left-6 sm:mt-0 sm:text-[18px] sm:leading-7">
               Places to connect to our free wifi
             </p>
           </div>
@@ -353,25 +366,25 @@ function HowToConnectModal({ onClose }: { onClose: () => void }) {
 
         <div className="overflow-hidden rounded-[24px] bg-white">
           <div className="bg-[#FBFBFB] px-6 py-4 sm:px-8">
-            <p className="text-[18px] leading-7 text-[#1E1E1E]">
+            <p className="text-[15px] leading-6 text-[#1E1E1E] sm:text-[18px] sm:leading-7">
               <span className="font-medium text-[#B3B3B3]">Step 1: </span>
               <span className="font-medium">
                 Connect to SSID : NCC-FUNAABWIFI-2023
               </span>
             </p>
-            <p className="text-[18px] leading-7 text-[#1E1E1E]">
+            <p className="text-[15px] leading-6 text-[#1E1E1E] sm:text-[18px] sm:leading-7">
               <span className="font-medium">Use the password : </span>12345678
             </p>
           </div>
 
           <div className="bg-[#FBFBFB] px-6 py-4 sm:px-8">
-            <p className="text-[18px] leading-7 text-[#1E1E1E]">
+            <p className="text-[15px] leading-6 text-[#1E1E1E] sm:text-[18px] sm:leading-7">
               <span className="font-medium text-[#B3B3B3]">Step 2: </span>
               <span className="font-medium">
                 This will redirect you to the Dodopho login page
               </span>
             </p>
-            <p className="text-[18px] font-medium leading-7 text-[#1E1E1E]">
+            <p className="text-[15px] font-medium leading-6 text-[#1E1E1E] sm:text-[18px] sm:leading-7">
               Enter your CUG number and your password to access the free
               internet
             </p>
@@ -379,7 +392,7 @@ function HowToConnectModal({ onClose }: { onClose: () => void }) {
 
           <div className="flex items-start gap-2 bg-[#FFF1C2] px-6 py-2 sm:px-8">
             <CautionIcon className="mt-[2px] size-5 shrink-0 text-[#7A3D00]" />
-            <p className="text-[16px] leading-7 text-[#401B01] sm:text-[18px]">
+            <p className="text-[14px] leading-6 text-[#401B01] sm:text-[18px] sm:leading-7">
               Please when typing your CUG number. It should start without the
               initial digit e.g 9012345678
             </p>
@@ -776,16 +789,6 @@ export default function Home() {
                 </div>
 
                 <div className="flex w-full flex-col gap-2">
-                  <CredentialField
-                    icon={<UserRound className="size-5" strokeWidth={2} />}
-                    label="Name"
-                    value={ui.credential.full_name}
-                  />
-                  <CredentialField
-                    icon={<GraduationCap className="size-5" strokeWidth={2} />}
-                    label="Department"
-                    value={ui.credential.department || ui.credential.college}
-                  />
                   <CredentialField
                     icon={<KeyRound className="size-5" strokeWidth={2} />}
                     label="Your Internet password"
